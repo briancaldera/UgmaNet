@@ -1,5 +1,6 @@
+import 'package:UgmaNet/services/firebase_service.dart';
 import 'package:flutter/material.dart';
-import 'package:ugmanet/visual/Screens/feed.dart';
+import 'package:UgmaNet/visual/Screens/feed.dart';
 
 TextEditingController expedientNumber = TextEditingController();
 TextEditingController password = TextEditingController();
@@ -200,28 +201,50 @@ class __FormContentState extends State<_FormContent> {
                     ),
                   ),
                   onPressed: () {
-                    bool logged =
-                        login(expedientNumber.text, password.text, context);
-                    if (logged == false) {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: const Text('Error'),
-                            content: const Text(
-                                'Credenciales invalidas. Por favor revise e intente de nuevo'),
-                            actions: <Widget>[
-                              TextButton(
-                                child: const Text('OK'),
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    }
+                    FutureBuilder(
+                        future: getUsuarios(),
+                        builder: ((context, snapshot) {
+                          if (snapshot.hasData) {
+                            return ListView.builder(
+                              itemCount: snapshot.data?.length,
+                              itemBuilder: (context, index) {
+                                return Text(
+                                    snapshot.data?[index]['Expediente']);
+                              },
+                            );
+                          } else {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          }
+                        }));
+                    login(expedientNumber.text, password.text, (bool success) {
+                      if (success) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const NewsFeedPage1()),
+                        );
+                      } else {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text('Error'),
+                              content: const Text(
+                                  'Credenciales invalidas. Por favor revise e intente de nuevo'),
+                              actions: <Widget>[
+                                TextButton(
+                                  child: const Text('OK'),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      }
+                    });
                   }),
             ),
           ],
@@ -233,16 +256,18 @@ class __FormContentState extends State<_FormContent> {
   Widget _gap() => const SizedBox(height: 16);
 }
 
-bool login(String expedientNumber, String password, BuildContext context) {
-  //TODO
-  //esto es un placeholder :D por favor cambiar la funcion por algo serio
-  if (expedientNumber == '123456789' && password == 'password123') {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const NewsFeedPage1()),
-    );
-    return true;
+void login(
+    String expedientNumber, String password, Function(bool) callback) async {
+  int exp = int.parse(expedientNumber);
+
+  String passwordDb = await askUsuario(exp);
+
+  if (passwordDb == "notfound") {
+    // Handle the case where the expedient number is not found
+    callback(false);
+  } else if (password == passwordDb) {
+    callback(true);
   } else {
-    return false;
+    callback(false);
   }
 }

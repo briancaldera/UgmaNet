@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1017831043436",
+    "project_id": "ugmanet-e3c8b",
+    "storage_bucket": "ugmanet-e3c8b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1017831043436:android:188d2a91bc2fc16c0d0349",
+        "android_client_info": {
+          "package_name": "com.example.ugmanet"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA0e3wjjL6HzJK7Gk6tYUMsdEgsdrVo-CQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

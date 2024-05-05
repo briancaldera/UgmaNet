@@ -220,14 +220,17 @@ class FeedItem {
   final int commentsCount;
   final int likesCount;
   final int retweetsCount;
+  final String postId; // new field
 
-  FeedItem(
-      {this.content,
-      this.imageUrl,
-      required this.user,
-      this.commentsCount = 0,
-      this.likesCount = 0,
-      this.retweetsCount = 0});
+  FeedItem({
+    this.content,
+    this.imageUrl,
+    required this.user,
+    this.commentsCount = 0,
+    this.likesCount = 0,
+    this.retweetsCount = 0,
+    required this.postId,
+  });
 }
 
 class User {

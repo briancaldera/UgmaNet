@@ -1,8 +1,8 @@
 import "package:cloud_firestore/cloud_firestore.dart";
-import 'package:UgmaNet/visual/Screens/feed.dart';
 
 FirebaseFirestore db = FirebaseFirestore.instance;
 
+//Devuelve en una lista todos los usuarios, dudo que sirva de algo
 Future<List> getUsuarios() async {
   List usuarios = [];
   CollectionReference collectionReferenceUsuarios = db.collection("Usuarios");
@@ -16,6 +16,7 @@ Future<List> getUsuarios() async {
   return usuarios;
 }
 
+//Devuelve la contraseña asociada al expediente que se le de
 Future<String> askUsuario(int expediente) async {
   CollectionReference collectionReferenceUsuarios = db.collection("Usuarios");
   QuerySnapshot querySnapshot = await collectionReferenceUsuarios
@@ -30,75 +31,6 @@ Future<String> askUsuario(int expediente) async {
   }
 }
 
-Future<List<FeedItem>> getRecentPosts() async {
-  List<FeedItem> posts = [];
-  CollectionReference collectionReferencePosts = db.collection("Posts");
-
-  QuerySnapshot querySnapshot = await collectionReferencePosts
-      .orderBy("date", descending: true)
-      .limit(10)
-      .get();
-
-  for (var doc in querySnapshot.docs) {
-    Map<String, dynamic> postData = doc.data() as Map<String, dynamic>;
-    User author = await getUserByExpediente(
-        postData["author"]); // assume getUserByExpediente function exists
-    FeedItem post = FeedItem(
-      content: postData["content"],
-      imageUrl: postData["imageUrl"],
-      user: author,
-      commentsCount: postData["commentsCount"] ?? 0,
-      likesCount: postData["likesCount"] ?? 0,
-      retweetsCount: postData["retweetsCount"] ?? 0,
-      postId: doc.id,
-    );
-    posts.add(post);
-  }
-
-  return posts;
-}
-
-Future<String> addPost(
-    String title, String content, int authorExpediente) async {
-  CollectionReference collectionReferencePosts = db.collection("Posts");
-  String postId = collectionReferencePosts.doc().id;
-  DateTime now = DateTime.now();
-
-  await collectionReferencePosts.doc(postId).set({
-    "id": postId,
-    "title": title,
-    "content": content,
-    "author": authorExpediente,
-    "date": now,
-  });
-
-  return postId; // return the post ID
-}
-
-Future<FeedItem?> getPostById(String postId) async {
-  CollectionReference collectionReferencePosts = db.collection("Posts");
-  DocumentSnapshot documentSnapshot =
-      await collectionReferencePosts.doc(postId).get();
-
-  if (documentSnapshot.exists) {
-    Map<String, dynamic> postData =
-        documentSnapshot.data()! as Map<String, dynamic>;
-    User author = await getUserByExpediente(
-        postData["author"]); // assume getUserByExpediente function exists
-    return FeedItem(
-      content: postData["content"],
-      imageUrl: postData["imageUrl"],
-      user: author,
-      commentsCount: postData["commentsCount"] as int? ?? 0,
-      likesCount: postData["likesCount"] as int? ?? 0,
-      retweetsCount: postData["retweetsCount"] as int? ?? 0,
-      postId: postId,
-    );
-  } else {
-    return null;
-  }
-}
-
 Future<User> getUserByExpediente(int expediente) async {
   CollectionReference collectionReferenceUsuarios = db.collection("Usuarios");
   QuerySnapshot querySnapshot = await collectionReferenceUsuarios
@@ -110,18 +42,91 @@ Future<User> getUserByExpediente(int expediente) async {
     return User(
       fullName: documentSnapshot.get("Nombre"),
       imageUrl: documentSnapshot.get("Imagen"),
-      userName: documentSnapshot.get("Usuario"),
+      tipo: documentSnapshot.get("Tipo"),
     );
   } else {
-    return User(fullName: "", imageUrl: "", userName: "");
+    return User(fullName: "", imageUrl: "", tipo: "");
   }
+}
+
+Future<List<FeedItem>> getFeedItems() async {
+  CollectionReference collectionReferenceFeed = db.collection("Feed");
+  QuerySnapshot querySnapshot = await collectionReferenceFeed.get();
+
+  List<FeedItem> feedItems = [];
+
+  for (var doc in querySnapshot.docs) {
+    User user = await getUserByExpediente(doc.get("User"));
+    DateTime postDate = doc.get("PostDate").toDate();
+    String? content = doc.get("Content");
+    String? imageUrl = doc.get("ImageUrl");
+
+    feedItems.add(FeedItem(
+      content: content ?? "", // Use empty string if content is null
+      imageUrl: imageUrl ?? "", // Use empty string if imageUrl is null
+      user: user,
+      commentsCount:
+          doc.get("CommentsCount") ?? 0, // Use 0 if commentsCount is null
+      likesCount: doc.get("LikesCount") ?? 0, // Use 0 if likesCount is null
+      retweetsCount:
+          doc.get("RetweetsCount") ?? 0, // Use 0 if retweetsCount is null
+      postDate: postDate,
+    ));
+  }
+
+  feedItems.sort((a, b) => b.postDate.compareTo(a.postDate));
+
+  return feedItems;
+}
+
+Future<void> saveNewPost(String? content, String? imageUrl, int userId) async {
+  // Get a reference to the "Feed" collection in Firebase Firestore
+  CollectionReference collectionReferenceFeed = db.collection("Feed");
+
+  // Create a new document in the "Feed" collection with a random ID
+  DocumentReference documentReference = await collectionReferenceFeed.add({
+    "Content": content,
+    "ImageUrl": imageUrl,
+    "User": userId,
+    "PostDate": Timestamp.now(),
+    "CommentsCount": 0,
+    "LikesCount": 0,
+    "RetweetsCount": 0,
+  });
+
+  // Get the ID of the new document
+  String documentId = documentReference.id;
+
+  // Update the document with the generated ID
+  await documentReference.update({
+    "ID": documentId,
+  });
 }
 
 class User {
   final String fullName;
   final String imageUrl;
-  final String userName;
+  final String tipo;
 
-  User(
-      {required this.fullName, required this.imageUrl, required this.userName});
+  User({required this.fullName, required this.imageUrl, required this.tipo});
+}
+
+class FeedItem {
+  final String? content;
+  final String? imageUrl;
+  final User user;
+  final int commentsCount;
+  final int likesCount;
+  final int retweetsCount;
+  final DateTime postDate;
+
+  FeedItem({
+    this.content,
+    this.imageUrl,
+    required this.user,
+    this.commentsCount = 0,
+    this.likesCount = 0,
+    this.retweetsCount = 0,
+    required this.postDate,
+  });
 }

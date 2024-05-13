@@ -1,10 +1,15 @@
+import 'package:UgmaNet/services/firebase_service.dart';
 import 'package:flutter/material.dart';
 import 'package:UgmaNet/visual/Screens/login.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:logger/logger.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  var logger = Logger();
+  List<FeedItem> lista = await getFeedItems();
+  logger.d(lista[0].user.imageUrl);
   runApp(const MyApp());
 }
 

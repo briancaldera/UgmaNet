@@ -50,31 +50,39 @@ Future<User> getUserByExpediente(int expediente) async {
 }
 
 Future<List<FeedItem>> getFeedItems() async {
-  CollectionReference collectionReferenceFeed = db.collection("Feed");
-  QuerySnapshot querySnapshot = await collectionReferenceFeed.get();
+  final CollectionReference collectionReferenceFeed = db.collection("Feed");
+  final QuerySnapshot querySnapshot = await collectionReferenceFeed.get();
 
-  List<FeedItem> feedItems = [];
+  final List<FeedItem> feedItems = await _processQuerySnapshot(querySnapshot);
+
+  feedItems.sort((a, b) => b.postDate.compareTo(a.postDate));
+
+  return feedItems;
+}
+
+Future<List<FeedItem>> _processQuerySnapshot(
+    QuerySnapshot querySnapshot) async {
+  final List<FeedItem> feedItems = [];
 
   for (var doc in querySnapshot.docs) {
-    User user = await getUserByExpediente(doc.get("User"));
-    DateTime postDate = doc.get("PostDate").toDate();
-    String? content = doc.get("Content");
-    String? imageUrl = doc.get("ImageUrl");
+    final User user = await getUserByExpediente(doc.get("User"));
+    final DateTime postDate = doc.get("postDate").toDate();
+
+    final String content =
+        doc.get("Content") ?? ""; // Use empty string if content is null
+    final String imageUrl =
+        doc.get("ImageUrl") ?? ""; // Use empty string if imageUrl is null
 
     feedItems.add(FeedItem(
-      content: content ?? "", // Use empty string if content is null
-      imageUrl: imageUrl ?? "", // Use empty string if imageUrl is null
+      content: content,
+      imageUrl: imageUrl,
       user: user,
-      commentsCount:
-          doc.get("CommentsCount") ?? 0, // Use 0 if commentsCount is null
-      likesCount: doc.get("LikesCount") ?? 0, // Use 0 if likesCount is null
-      retweetsCount:
-          doc.get("RetweetsCount") ?? 0, // Use 0 if retweetsCount is null
+      commentsCount: doc.get("commentsCount") ?? 0,
+      likesCount: doc.get("likesCount") ?? 0,
+      retweetsCount: doc.get("retweetsCount") ?? 0,
       postDate: postDate,
     ));
   }
-
-  feedItems.sort((a, b) => b.postDate.compareTo(a.postDate));
 
   return feedItems;
 }

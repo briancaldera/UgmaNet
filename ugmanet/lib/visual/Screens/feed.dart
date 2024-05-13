@@ -2,8 +2,33 @@ import 'package:UgmaNet/services/firebase_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class NewsFeedPage1 extends StatelessWidget {
+class NewsFeedPage1 extends StatefulWidget {
   const NewsFeedPage1({super.key});
+
+  @override
+  State<NewsFeedPage1> createState() => _NewsFeedPage1State();
+}
+
+class _NewsFeedPage1State extends State<NewsFeedPage1> {
+  List<FeedItem> _feedItems = [];
+
+  @override
+  void initState() {
+    super.initState();
+    cargarFeed();
+  }
+
+  void cargarFeed() async {
+    try {
+      List<FeedItem> data = [];
+      data = await getFeedItems();
+      setState(() {
+        _feedItems = List.from(data);
+      });
+    } catch (e) {
+      print('Error al Cargar: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -98,7 +123,7 @@ class NewsFeedPage1 extends StatelessWidget {
                             ],
                           ),
                           if (item.content != null) Text(item.content!),
-                          if (item.imageUrl != null)
+                          if (item.imageUrl != null || item.imageUrl != '')
                             Container(
                               height: 200,
                               margin: const EdgeInsets.only(top: 8.0),
@@ -226,40 +251,7 @@ class _ActionsRow extends StatelessWidget {
   }
 }
 
-class FeedItem {
-  final String? content;
-  final String? imageUrl;
-  final User user;
-  final int commentsCount;
-  final int likesCount;
-  final int retweetsCount;
-  final String postDate; // new field
-
-  FeedItem({
-    this.content,
-    this.imageUrl,
-    required this.user,
-    this.commentsCount = 0,
-    this.likesCount = 0,
-    this.retweetsCount = 0,
-    required this.postDate,
-  });
-}
-
-class User {
-  final String fullName;
-  final String imageUrl;
-  final String tipo;
-
-  User(
-    this.fullName,
-    this.tipo,
-    this.imageUrl,
-  );
-}
-
 //----------------------Importacion de la lista de posts----------------------
-final List<FeedItem> _feedItems = getFeedItems() as List<FeedItem>;
 
 class MoreBottomSheet extends StatelessWidget {
   const MoreBottomSheet({super.key});

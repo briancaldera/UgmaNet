@@ -1,4 +1,5 @@
 import 'package:UgmaNet/services/firebase_service.dart';
+import 'package:UgmaNet/services/globals.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -11,6 +12,7 @@ class NewsFeedPage1 extends StatefulWidget {
 
 class _NewsFeedPage1State extends State<NewsFeedPage1> {
   List<FeedItem> _feedItems = [];
+  User? user;
 
   @override
   void initState() {
@@ -97,13 +99,15 @@ class _NewsFeedPage1State extends State<NewsFeedPage1> {
                                 overflow: TextOverflow.ellipsis,
                                 text: TextSpan(children: [
                                   TextSpan(
-                                    text: item.user.fullName,
+                                    //------------------Nombre----------------//
+                                    text: "${item.user.fullName} - ",
                                     style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
                                         color: Colors.black),
                                   ),
                                   TextSpan(
+                                    //-----------------Tipo-------------------//
                                     text: item.user.tipo,
                                     style:
                                         Theme.of(context).textTheme.titleMedium,
@@ -122,6 +126,8 @@ class _NewsFeedPage1State extends State<NewsFeedPage1> {
                               )
                             ],
                           ),
+
+                          //------------Post Contenido-----------------//
                           if (item.content != null) Text(item.content!),
                           if (item.imageUrl != null || item.imageUrl != '')
                             Container(
@@ -174,6 +180,16 @@ class _NewsFeedPage1State extends State<NewsFeedPage1> {
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.grey,
         onTap: (index) {
+          if (index == 2) {
+            // Funcion de añadir
+            showModalBottomSheet(
+              context: context,
+              builder: (BuildContext context) {
+                return const UploadNew();
+              },
+            );
+          }
+
           if (index == 4) {
             // Show the bottom sheet when the user taps on the profile tab
             showModalBottomSheet(
@@ -211,7 +227,7 @@ class _AvatarImage extends StatelessWidget {
 class _ActionsRow extends StatelessWidget {
   final FeedItem item;
   const _ActionsRow({required this.item});
-
+// ------------------------Panel de iconos------------------------------------//
   @override
   Widget build(BuildContext context) {
     return Theme(
@@ -253,8 +269,35 @@ class _ActionsRow extends StatelessWidget {
 
 //----------------------Importacion de la lista de posts----------------------
 
-class MoreBottomSheet extends StatelessWidget {
+class MoreBottomSheet extends StatefulWidget {
   const MoreBottomSheet({super.key});
+
+  @override
+  State<MoreBottomSheet> createState() => _MoreBottomSheetState();
+}
+
+class _MoreBottomSheetState extends State<MoreBottomSheet> {
+  User user = User(
+      fullName: "Default",
+      imageUrl: "https://picsum.photos/id/1062/80/80",
+      tipo: "estudiante");
+
+  @override
+  void initState() {
+    super.initState();
+    cargarUsuario();
+  }
+
+  void cargarUsuario() async {
+    try {
+      User usuarioActual = await getUserByExpediente(expedienteGlobal);
+      setState(() {
+        user = usuarioActual;
+      });
+    } catch (e) {
+      print('Error al Cargar: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -269,14 +312,13 @@ class MoreBottomSheet extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 30.0,
-                backgroundImage:
-                    NetworkImage('https://picsum.photos/id/1062/80/80'),
+                backgroundImage: NetworkImage(user.imageUrl),
               ),
               const SizedBox(width: 16.0),
               Text(
-                'John Doe',
+                user.fullName,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const Spacer(), // Add a Spacer to push the "more" button to the right
@@ -325,3 +367,100 @@ final List<String> _moreItems = [
   'Ayuda',
   'Cerrar sesion',
 ];
+/*
+class UploadNew extends StatefulWidget {
+  const UploadNew({super.key});
+
+  @override
+  State<UploadNew> createState() => _UploadNew();
+}
+
+class _UploadNew extends State<UploadNew> {
+  User user = User(
+      fullName: "Default",
+      imageUrl: "https://picsum.photos/id/1062/80/80",
+      tipo: "estudiante");
+
+  @override
+  void initState() {
+    super.initState();
+    cargarUsuario();
+  }
+
+  void cargarUsuario() async {
+    try {
+      User usuarioActual = await getUserByExpediente(expedienteGlobal);
+      setState(() {
+        user = usuarioActual;
+      });
+    } catch (e) {
+      print('Error al Cargar: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {}
+}
+*/
+
+class UploadNew extends StatefulWidget {
+  const UploadNew({super.key});
+
+  @override
+  State<UploadNew> createState() => _UploadNewState();
+}
+
+class _UploadNewState extends State<UploadNew> {
+  late TextEditingController _contentController;
+  String? _imageUrl;
+  int userId = expedienteGlobal;
+
+  @override
+  void initState() {
+    super.initState();
+    _contentController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _contentController.dispose();
+    super.dispose();
+  }
+
+  void _submitPost() async {
+    String content = _contentController.text.trim();
+    if (content.isNotEmpty || _imageUrl != null) {
+      await saveNewPost(content, _imageUrl, userId);
+      // Clear the form after submission
+      setState(() {
+        _contentController.clear();
+        _imageUrl = null;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Upload a new post')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
+              controller: _contentController,
+              decoration: const InputDecoration(labelText: 'Content'),
+              maxLines: null,
+            ),
+            const SizedBox(height: 16.0),
+            ElevatedButton(
+              onPressed: _submitPost,
+              child: const Text('Submit'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -1,4 +1,5 @@
 import 'package:UgmaNet/services/firebase_service.dart';
+import 'package:UgmaNet/services/globals.dart';
 import 'package:flutter/material.dart';
 import 'package:UgmaNet/visual/Screens/feed.dart';
 
@@ -219,6 +220,7 @@ class __FormContentState extends State<_FormContent> {
                         }));
                     login(expedientNumber.text, password.text, (bool success) {
                       if (success) {
+                        expedienteGlobal = int.parse(expedientNumber.text);
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(

@@ -32,6 +32,10 @@ class _NewsFeedPage1State extends State<NewsFeedPage1> {
     }
   }
 
+  Future<void> _refreshFeed() async {
+    cargarFeed();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,7 +72,8 @@ class _NewsFeedPage1State extends State<NewsFeedPage1> {
 
       //--------------------------------Appbar----------------------------------//
 
-      body: Center(
+      body: RefreshIndicator(
+        onRefresh: _refreshFeed,
         child: Container(
           constraints: const BoxConstraints(maxWidth: 400),
           child: ListView.separated(

@@ -96,10 +96,10 @@ Future<void> saveNewPost(String? content, String? imageUrl, int userId) async {
     "Content": content,
     "ImageUrl": imageUrl,
     "User": userId,
-    "PostDate": Timestamp.now(),
-    "CommentsCount": 0,
-    "LikesCount": 0,
-    "RetweetsCount": 0,
+    "postDate": Timestamp.now(),
+    "commentsCount": 0,
+    "likesCount": 0,
+    "retweetsCount": 0,
   });
 
   // Get the ID of the new document

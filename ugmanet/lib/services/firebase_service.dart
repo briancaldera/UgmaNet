@@ -111,6 +111,35 @@ Future<void> saveNewPost(String? content, String? imageUrl, int userId) async {
   });
 }
 
+Future<void> registerUserDB(
+  int expediente,
+  String nombre,
+  String imagen,
+  String contrasenia,
+  String tipo,
+) async {
+  try {
+    // Create a new user account with Firebase Authentication
+    CollectionReference collectionReferenceFeed = db.collection("Usuarios");
+
+    // Add the user's information to Firestore
+    DocumentReference documentReference = await collectionReferenceFeed.add({
+      'Expediente': expediente,
+      'Nombre': nombre,
+      'Imagen': imagen,
+      'Contraseña': contrasenia,
+      'Tipo': tipo,
+    });
+    String documentId = documentReference.id;
+    await documentReference.update({
+      "ID": documentId,
+    });
+  } catch (e) {
+    // Handle errors during registration
+    print(e);
+  }
+}
+
 class User {
   final String fullName;
   final String imageUrl;

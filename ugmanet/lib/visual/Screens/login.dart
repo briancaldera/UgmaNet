@@ -6,63 +6,75 @@ import 'package:UgmaNet/visual/Screens/feed.dart';
 TextEditingController expedientNumber = TextEditingController();
 TextEditingController password = TextEditingController();
 
-class SignInPage2 extends StatelessWidget {
+class SignInPage2 extends StatefulWidget {
   const SignInPage2({super.key});
 
+  @override
+  State<SignInPage2> createState() => _SignInPage2State();
+}
+
+class _SignInPage2State extends State<SignInPage2> {
   @override
   Widget build(BuildContext context) {
     final bool isSmallScreen = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
-        appBar: AppBar(
-          title: Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(width: 16),
-                Text(
-                  'UGMANET',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: const Color.fromARGB(206, 36, 55, 165),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 35),
-                ),
-              ],
-            ),
-          ),
-          elevation: 0,
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(1.0),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Container(
-                color: Colors.grey, // change the color as per your requirement
-                height: 1.0,
+      //---------------------------Appbar-------------------------------------//
+      appBar: AppBar(
+        title: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(width: 16),
+              Text(
+                'UGMANET',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    color: const Color.fromARGB(206, 36, 55, 165),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 35),
               ),
+            ],
+          ),
+        ),
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1.0),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Container(
+              color: Colors.grey, // change the color as per your requirement
+              height: 1.0,
             ),
           ),
         ),
-        body: Center(
-            child: isSmallScreen
-                ? const Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _Logo(),
-                      _FormContent(),
-                    ],
-                  )
-                : Container(
-                    padding: const EdgeInsets.all(32.0),
-                    constraints: const BoxConstraints(maxWidth: 800),
-                    child: const Row(
-                      children: [
-                        Expanded(child: _Logo()),
-                        Expanded(
-                          child: Center(child: _FormContent()),
-                        ),
-                      ],
+      ),
+      //---------------------------Appbar-------------------------------------//
+
+      body: Center(
+        child: isSmallScreen
+            ? const Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _Logo(),
+                  _FormContent(),
+                  _RegisterButton(), // Add this widget below the login form
+                ],
+              )
+            : Container(
+                padding: const EdgeInsets.all(32.0),
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: const Row(
+                  children: [
+                    Expanded(child: _Logo()),
+                    Expanded(
+                      child: Center(child: _FormContent()),
                     ),
-                  )));
+                  ],
+                ),
+              ),
+      ),
+      //-------------------------------Body---------------------------------//
+    );
   }
 }
 
@@ -271,5 +283,183 @@ void login(
     callback(true);
   } else {
     callback(false);
+  }
+}
+
+class RegisterForm extends StatefulWidget {
+  const RegisterForm({super.key});
+
+  @override
+  RegisterFormState createState() => RegisterFormState();
+}
+
+class RegisterFormState extends State<RegisterForm> {
+  final _formKey = GlobalKey<FormState>();
+  final expedientController = TextEditingController();
+  final nameController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        width: 300,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset('assets/iconos/logo.png'),
+            const SizedBox(height: 16),
+            Center(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: expedientController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor ingrese su numero de expediente';
+                        }
+
+                        bool expedientValid =
+                            RegExp(r'^\d{9,10}$').hasMatch(value);
+                        if (!expedientValid) {
+                          return 'Por favor ingrese un numero de expediente valido';
+                        }
+
+                        return null;
+                      },
+                      decoration: const InputDecoration(
+                        labelText: 'Numero de expediente',
+                        hintText: 'Ingresa tu numero de expediente',
+                        prefixIcon: Icon(Icons.email_outlined),
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: nameController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor ingrese su nombre';
+                        }
+
+                        return null;
+                      },
+                      decoration: const InputDecoration(
+                        labelText: 'Nombre',
+                        hintText: 'Ingresa tu nombre',
+                        prefixIcon: Icon(Icons.person),
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: passwordController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor ingrese su contraseña';
+                        }
+
+                        if (value.length < 6) {
+                          return 'La contraseña debe tener al menos 6 caracteres';
+                        }
+
+                        return null;
+                      },
+                      obscureText: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Contraseña',
+                        hintText: 'Ingresa tu contraseña',
+                        prefixIcon: Icon(Icons.lock_outline_rounded),
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (_formKey.currentState!.validate()) {
+                          int expediente = int.parse(expedientController.text);
+                          String nombre = nameController.text;
+                          String password = passwordController.text;
+                          registerUser(expediente, nombre, password);
+                        }
+                      },
+                      child: const Padding(
+                        padding: EdgeInsets.all(10.0),
+                        child: Text(
+                          'Registrar',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void registerUser(int expediente, String nombre, String password) async {
+    registerUserDB(expediente, nombre, "https://picsum.photos/id/1062/80/80",
+        password, "estudiante");
+    print('User registered');
+    Navigator.pop(context);
+  }
+
+  @override
+  void dispose() {
+    expedientController.dispose();
+    nameController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+}
+
+class RegisterPage extends StatelessWidget {
+  const RegisterPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Registrarse'),
+      ),
+      body: const RegisterForm(),
+    );
+  }
+}
+
+class _RegisterButton extends StatelessWidget {
+  const _RegisterButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+        ),
+        child: const Padding(
+          padding: EdgeInsets.all(10.0),
+          child: Text(
+            'Registrarse',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+        ),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const RegisterPage()),
+          );
+        },
+      ),
+    );
   }
 }

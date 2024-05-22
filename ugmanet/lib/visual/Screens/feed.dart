@@ -45,7 +45,7 @@ class _NewsFeedPage1State extends State<NewsFeedPage1> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset('assets/iconos/minilogo.png'),
+              Image.network("https://i.postimg.cc/3JN8kNY2/minilogo.png"),
               const SizedBox(width: 16),
               Text(
                 'UGMANET',

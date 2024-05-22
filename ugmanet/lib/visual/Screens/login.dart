@@ -89,7 +89,7 @@ class _Logo extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         //FlutterLogo(size: isSmallScreen ? 100 : 200),
-        Image.asset('assets/iconos/logo.png'),
+        Image.network("https://i.postimg.cc/jS99jk2H/logo.png"),
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: Text(
@@ -302,7 +302,7 @@ class RegisterFormState extends State<RegisterForm> {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Container(
+      child: SizedBox(
         width: 300,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

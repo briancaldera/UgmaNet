@@ -136,7 +136,6 @@ class _NewsFeedPage1State extends State<NewsFeedPage1> {
                           if (item.content != null) Text(item.content!),
                           if (item.imageUrl != null || item.imageUrl != '')
                             Container(
-                              height: 200,
                               margin: const EdgeInsets.only(top: 8.0),
                               decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(8.0),

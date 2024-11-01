@@ -11,6 +11,7 @@ import 'package:logger/logger.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
+    name: 'ugmanet-e3c8b',
     options: DefaultFirebaseOptions.currentPlatform
   );
 

@@ -61,7 +61,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1017831043436',
     projectId: 'ugmanet-e3c8b',
     authDomain: 'ugmanet-e3c8b.firebaseapp.com',
-    storageBucket: 'ugmanet-e3c8b.appspot.com',
+    storageBucket: 'ugmanet-e3c8b.firebasestorage.app',
     measurementId: 'G-42G8M93BVW',
   );
 
@@ -70,7 +70,7 @@ class DefaultFirebaseOptions {
     appId: '1:1017831043436:android:188d2a91bc2fc16c0d0349',
     messagingSenderId: '1017831043436',
     projectId: 'ugmanet-e3c8b',
-    storageBucket: 'ugmanet-e3c8b.appspot.com',
+    storageBucket: 'ugmanet-e3c8b.firebasestorage.app',
   );
 
   static const FirebaseOptions androidDebug = FirebaseOptions(
@@ -86,7 +86,7 @@ class DefaultFirebaseOptions {
     appId: '1:1017831043436:ios:1b8bdfad2fde6f0c0d0349',
     messagingSenderId: '1017831043436',
     projectId: 'ugmanet-e3c8b',
-    storageBucket: 'ugmanet-e3c8b.appspot.com',
+    storageBucket: 'ugmanet-e3c8b.firebasestorage.app',
     iosBundleId: 'com.example.ugmanet',
   );
 
@@ -95,7 +95,7 @@ class DefaultFirebaseOptions {
     appId: '1:1017831043436:ios:1b8bdfad2fde6f0c0d0349',
     messagingSenderId: '1017831043436',
     projectId: 'ugmanet-e3c8b',
-    storageBucket: 'ugmanet-e3c8b.appspot.com',
+    storageBucket: 'ugmanet-e3c8b.firebasestorage.app',
     iosBundleId: 'com.example.ugmanet',
   );
 
@@ -105,7 +105,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1017831043436',
     projectId: 'ugmanet-e3c8b',
     authDomain: 'ugmanet-e3c8b.firebaseapp.com',
-    storageBucket: 'ugmanet-e3c8b.appspot.com',
+    storageBucket: 'ugmanet-e3c8b.firebasestorage.app',
     measurementId: 'G-XWJ36DTQ8J',
   );
+
 }

@@ -4,7 +4,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class NewsFeedPage1 extends StatefulWidget {
-  const NewsFeedPage1({super.key});
+  const NewsFeedPage1({
+    super.key,
+  });
 
   @override
   State<NewsFeedPage1> createState() => _NewsFeedPage1State();
@@ -228,10 +230,19 @@ class _AvatarImage extends StatelessWidget {
   }
 }
 
-class _ActionsRow extends StatelessWidget {
+// ------------------------Panel de iconos------------------------------------//
+
+class _ActionsRow extends StatefulWidget {
   final FeedItem item;
   const _ActionsRow({required this.item});
-// ------------------------Panel de iconos------------------------------------//
+
+  @override
+  State<_ActionsRow> createState() => _ActionsRowState();
+}
+
+class _ActionsRowState extends State<_ActionsRow> {
+  bool _isLiked = false;
+
   @override
   Widget build(BuildContext context) {
     return Theme(
@@ -248,18 +259,21 @@ class _ActionsRow extends StatelessWidget {
             onPressed: () {},
             icon: const Icon(Icons.mode_comment_outlined),
             label: Text(
-                item.commentsCount == 0 ? '' : item.commentsCount.toString()),
+                widget.item.commentsCount == 0 ? '' : widget.item.commentsCount.toString()),
           ),
           TextButton.icon(
             onPressed: () {},
             icon: const Icon(Icons.repeat_rounded),
             label: Text(
-                item.retweetsCount == 0 ? '' : item.retweetsCount.toString()),
+                widget.item.retweetsCount == 0 ? '' : widget.item.retweetsCount.toString()),
           ),
-          TextButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.favorite_border),
-            label: Text(item.likesCount == 0 ? '' : item.likesCount.toString()),
+          likeButton(
+            isLiked: _isLiked,
+            onTap: () {
+              setState((){
+                _isLiked = !_isLiked;
+              });
+            },
           ),
           IconButton(
             icon: const Icon(CupertinoIcons.share_up),
@@ -272,6 +286,23 @@ class _ActionsRow extends StatelessWidget {
 }
 
 //----------------------Importacion de la lista de posts----------------------
+
+class likeButton extends StatelessWidget {
+  bool isLiked;
+  void Function()? onTap;
+
+  likeButton({super.key, required this.isLiked, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Icon(
+        isLiked? Icons.favorite: Icons.favorite_border,
+        color: isLiked? Colors.red : Colors.grey),
+    );
+  }
+}
 
 class MoreBottomSheet extends StatefulWidget {
   const MoreBottomSheet({super.key});

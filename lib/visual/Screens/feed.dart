@@ -241,7 +241,14 @@ class _ActionsRow extends StatefulWidget {
 }
 
 class _ActionsRowState extends State<_ActionsRow> {
-  bool _isLiked = false;
+  bool isLiked = false;
+
+  void toggleLike(){
+    setState(() {
+      isLiked? widget.item.likesCount--:widget.item.likesCount++;
+      isLiked = !isLiked;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -267,14 +274,15 @@ class _ActionsRowState extends State<_ActionsRow> {
             label: Text(
                 widget.item.retweetsCount == 0 ? '' : widget.item.retweetsCount.toString()),
           ),
-          likeButton(
-            isLiked: _isLiked,
-            onTap: () {
-              setState((){
-                _isLiked = !_isLiked;
-              });
-            },
+
+          TextButton.icon(
+              onPressed: toggleLike,
+              icon: Icon(
+                isLiked? Icons.favorite: Icons.favorite_border_sharp,
+                color: isLiked? Colors.red : Colors.grey),
+              label: Text(widget.item.likesCount.toString())
           ),
+
           IconButton(
             icon: const Icon(CupertinoIcons.share_up),
             onPressed: () {},
@@ -286,23 +294,6 @@ class _ActionsRowState extends State<_ActionsRow> {
 }
 
 //----------------------Importacion de la lista de posts----------------------
-
-class likeButton extends StatelessWidget {
-  bool isLiked;
-  void Function()? onTap;
-
-  likeButton({super.key, required this.isLiked, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Icon(
-        isLiked? Icons.favorite: Icons.favorite_border,
-        color: isLiked? Colors.red : Colors.grey),
-    );
-  }
-}
 
 class MoreBottomSheet extends StatefulWidget {
   const MoreBottomSheet({super.key});

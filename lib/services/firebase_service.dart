@@ -153,7 +153,7 @@ class FeedItem {
   final String? imageUrl;
   final User user;
   final int commentsCount;
-  final int likesCount;
+  int likesCount;
   final int retweetsCount;
   final DateTime postDate;
 

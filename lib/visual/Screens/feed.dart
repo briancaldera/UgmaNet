@@ -4,7 +4,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class NewsFeedPage1 extends StatefulWidget {
-  const NewsFeedPage1({super.key});
+  const NewsFeedPage1({
+    super.key,
+  });
 
   @override
   State<NewsFeedPage1> createState() => _NewsFeedPage1State();
@@ -228,10 +230,26 @@ class _AvatarImage extends StatelessWidget {
   }
 }
 
-class _ActionsRow extends StatelessWidget {
+// ------------------------Panel de iconos------------------------------------//
+
+class _ActionsRow extends StatefulWidget {
   final FeedItem item;
   const _ActionsRow({required this.item});
-// ------------------------Panel de iconos------------------------------------//
+
+  @override
+  State<_ActionsRow> createState() => _ActionsRowState();
+}
+
+class _ActionsRowState extends State<_ActionsRow> {
+  bool isLiked = false;
+
+  void toggleLike(){
+    setState(() {
+      isLiked? widget.item.likesCount--:widget.item.likesCount++;
+      isLiked = !isLiked;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Theme(
@@ -248,19 +266,23 @@ class _ActionsRow extends StatelessWidget {
             onPressed: () {},
             icon: const Icon(Icons.mode_comment_outlined),
             label: Text(
-                item.commentsCount == 0 ? '' : item.commentsCount.toString()),
+                widget.item.commentsCount == 0 ? '' : widget.item.commentsCount.toString()),
           ),
           TextButton.icon(
             onPressed: () {},
             icon: const Icon(Icons.repeat_rounded),
             label: Text(
-                item.retweetsCount == 0 ? '' : item.retweetsCount.toString()),
+                widget.item.retweetsCount == 0 ? '' : widget.item.retweetsCount.toString()),
           ),
+
           TextButton.icon(
-            onPressed: () {},
-            icon: const Icon(Icons.favorite_border),
-            label: Text(item.likesCount == 0 ? '' : item.likesCount.toString()),
+              onPressed: toggleLike,
+              icon: Icon(
+                isLiked? Icons.favorite: Icons.favorite_border_sharp,
+                color: isLiked? Colors.red : Colors.grey),
+              label: Text(widget.item.likesCount.toString())
           ),
+
           IconButton(
             icon: const Icon(CupertinoIcons.share_up),
             onPressed: () {},

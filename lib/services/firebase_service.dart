@@ -142,10 +142,10 @@ Future<void> registerUserDB(
 
 class User {
   final String fullName;
-  final String imageUrl;
+  final String? imageUrl;
   final String tipo;
 
-  User({required this.fullName, required this.imageUrl, required this.tipo});
+  User({required this.fullName, this.imageUrl, required this.tipo});
 }
 
 class FeedItem {

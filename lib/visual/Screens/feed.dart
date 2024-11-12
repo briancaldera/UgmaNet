@@ -215,17 +215,21 @@ class _NewsFeedPage1State extends State<NewsFeedPage1> {
 //-----------------------------Funciones y clases-----------------------------//
 
 class _AvatarImage extends StatelessWidget {
-  final String url;
+  final String? url;
   const _AvatarImage(this.url);
 
   @override
   Widget build(BuildContext context) {
+    dynamic image = url != null ? NetworkImage(url!) : const AssetImage('assets/images/user-placeholder.jpg');
+
     return Container(
       width: 60,
       height: 60,
       decoration: BoxDecoration(
           shape: BoxShape.circle,
-          image: DecorationImage(image: NetworkImage(url))),
+          image: DecorationImage(
+              image: image
+          )),
     );
   }
 }
@@ -305,7 +309,6 @@ class MoreBottomSheet extends StatefulWidget {
 class _MoreBottomSheetState extends State<MoreBottomSheet> {
   User user = User(
       fullName: "Default",
-      imageUrl: "https://picsum.photos/id/1062/80/80",
       tipo: "estudiante");
 
   @override
@@ -327,6 +330,8 @@ class _MoreBottomSheetState extends State<MoreBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    dynamic bgImage = user.imageUrl != null ? NetworkImage(user.imageUrl!) : const AssetImage('assets/images/user-placeholder.jpg');
+    
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: const BoxDecoration(
@@ -340,7 +345,7 @@ class _MoreBottomSheetState extends State<MoreBottomSheet> {
             children: [
               CircleAvatar(
                 radius: 30.0,
-                backgroundImage: NetworkImage(user.imageUrl),
+                backgroundImage: bgImage,
               ),
               const SizedBox(width: 16.0),
               Text(

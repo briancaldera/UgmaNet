@@ -37,9 +37,10 @@ dependencies:
   cupertino_icons: ^1.0.6
   logger: ^1.2.2
   #firebase
-  firebase_auth: ^4.19.4
-  firebase_core: ^2.30.1
+  firebase_auth: ^4.16.0
+  firebase_core: ^2.32.0
   cloud_firestore: ^4.17.2
+  firebase_ui_auth: ^1.13.0
 dev_dependencies:
   flutter_launcher_icons: "^0.13.1"
   flutter_test:
@@ -65,24 +66,26 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-     - assets/iconos/
+     - assets/icons/
+     - assets/images/
+     - assets/images/logo/
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/iconos/minilogo.png"
+  image_path: "assets/icons/minilogo.png"
   min_sdk_android: 21 # android min sdk min:16, default 21
   web:
     generate: true
-    image_path: "assets/iconos/logo.png"
+    image_path: "assets/icons/logo.png"
     background_color: "#hexcode"
     theme_color: "#hexcode"
   windows:
     generate: true
-    image_path: "assets/iconos/logo.png"
+    image_path: "assets/icons/logo.png"
     icon_size: 48 # min:48, max:256, default: 48
   macos:
     generate: true
-    image_path: "assets/iconos/logo.png"
+    image_path: "assets/icons/logo.png"
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
 

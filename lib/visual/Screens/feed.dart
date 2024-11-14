@@ -1,7 +1,61 @@
+import 'package:UgmaNet/models/post.dart';
 import 'package:UgmaNet/services/firebase_service.dart';
 import 'package:UgmaNet/services/globals.dart';
+import 'package:UgmaNet/services/post_service.dart';
+import 'package:UgmaNet/services/user_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+class NewsFeedTab extends StatefulWidget {
+  const NewsFeedTab({
+    super.key,
+  });
+
+  @override
+  State createState() => _NewsFeedTabState();
+}
+
+class _NewsFeedTabState extends State<NewsFeedTab> {
+  List<Post> _feedItems = [];
+  PostService postService = PostServiceImpl.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshFeed();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+        child: RefreshIndicator(
+      onRefresh: _refreshFeed,
+      child: Container(
+        child: ListView.separated(
+          itemCount: _feedItems.length,
+          separatorBuilder: (BuildContext context, int index) {
+            return const Divider(
+              thickness: .4,
+            );
+          },
+          itemBuilder: (BuildContext context, int index) {
+            final feed = _feedItems[index];
+            return NewsFeedItem(feed);
+          },
+        ),
+      ),
+    ));
+  }
+
+  Future<void> _refreshFeed() async {
+    final posts = await postService.getPosts();
+
+    setState(() {
+      _feedItems = posts;
+    });
+  }
+}
 
 class NewsFeedPage1 extends StatefulWidget {
   const NewsFeedPage1({
@@ -216,20 +270,20 @@ class _NewsFeedPage1State extends State<NewsFeedPage1> {
 
 class _AvatarImage extends StatelessWidget {
   final String? url;
+
   const _AvatarImage(this.url);
 
   @override
   Widget build(BuildContext context) {
-    dynamic image = url != null ? NetworkImage(url!) : const AssetImage('assets/images/user-placeholder.jpg');
+    dynamic image = url != null
+        ? NetworkImage(url!)
+        : const AssetImage('assets/images/user-placeholder.jpg');
 
     return Container(
       width: 60,
       height: 60,
       decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          image: DecorationImage(
-              image: image
-          )),
+          shape: BoxShape.circle, image: DecorationImage(image: image)),
     );
   }
 }
@@ -238,6 +292,7 @@ class _AvatarImage extends StatelessWidget {
 
 class _ActionsRow extends StatefulWidget {
   final FeedItem item;
+
   const _ActionsRow({required this.item});
 
   @override
@@ -247,9 +302,9 @@ class _ActionsRow extends StatefulWidget {
 class _ActionsRowState extends State<_ActionsRow> {
   bool isLiked = false;
 
-  void toggleLike(){
+  void toggleLike() {
     setState(() {
-      isLiked? widget.item.likesCount--:widget.item.likesCount++;
+      isLiked ? widget.item.likesCount-- : widget.item.likesCount++;
       isLiked = !isLiked;
     });
   }
@@ -269,24 +324,22 @@ class _ActionsRowState extends State<_ActionsRow> {
           TextButton.icon(
             onPressed: () {},
             icon: const Icon(Icons.mode_comment_outlined),
-            label: Text(
-                widget.item.commentsCount == 0 ? '' : widget.item.commentsCount.toString()),
+            label: Text(widget.item.commentsCount == 0
+                ? ''
+                : widget.item.commentsCount.toString()),
           ),
           TextButton.icon(
             onPressed: () {},
             icon: const Icon(Icons.repeat_rounded),
-            label: Text(
-                widget.item.retweetsCount == 0 ? '' : widget.item.retweetsCount.toString()),
+            label: Text(widget.item.retweetsCount == 0
+                ? ''
+                : widget.item.retweetsCount.toString()),
           ),
-
           TextButton.icon(
               onPressed: toggleLike,
-              icon: Icon(
-                isLiked? Icons.favorite: Icons.favorite_border_sharp,
-                color: isLiked? Colors.red : Colors.grey),
-              label: Text(widget.item.likesCount.toString())
-          ),
-
+              icon: Icon(isLiked ? Icons.favorite : Icons.favorite_border_sharp,
+                  color: isLiked ? Colors.red : Colors.grey),
+              label: Text(widget.item.likesCount.toString())),
           IconButton(
             icon: const Icon(CupertinoIcons.share_up),
             onPressed: () {},
@@ -307,9 +360,7 @@ class MoreBottomSheet extends StatefulWidget {
 }
 
 class _MoreBottomSheetState extends State<MoreBottomSheet> {
-  User user = User(
-      fullName: "Default",
-      tipo: "estudiante");
+  User user = User(fullName: "Default", tipo: "estudiante");
 
   @override
   void initState() {
@@ -330,8 +381,10 @@ class _MoreBottomSheetState extends State<MoreBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    dynamic bgImage = user.imageUrl != null ? NetworkImage(user.imageUrl!) : const AssetImage('assets/images/user-placeholder.jpg');
-    
+    dynamic bgImage = user.imageUrl != null
+        ? NetworkImage(user.imageUrl!)
+        : const AssetImage('assets/images/user-placeholder.jpg');
+
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: const BoxDecoration(
@@ -352,7 +405,8 @@ class _MoreBottomSheetState extends State<MoreBottomSheet> {
                 user.fullName,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
-              const Spacer(), // Add a Spacer to push the "more" button to the right
+              const Spacer(),
+              // Add a Spacer to push the "more" button to the right
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert),
                 itemBuilder: (BuildContext context) {
@@ -494,4 +548,103 @@ class _UploadNewState extends State<UploadNew> {
       ),
     );
   }
+}
+
+class NewsFeedItem extends StatefulWidget {
+  final Post _post;
+  final UserService _userService = UserServiceImpl.instance;
+
+  NewsFeedItem(this._post, {super.key});
+
+  @override
+  State createState() => _NewsFeedItemState(_post);
+}
+
+class _NewsFeedItemState extends State<NewsFeedItem> {
+  final Post _post;
+
+  @override
+  Widget build(BuildContext context) {
+    const userPicture = CircleAvatar(
+      radius: 24,
+      backgroundImage: AssetImage(
+        'assets/images/user-placeholder.jpg',
+      ),
+    );
+
+    final header = Row(
+      textBaseline: TextBaseline.alphabetic,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      children: [
+        Expanded(
+            flex: 2,
+            child: Text(
+              overflow: TextOverflow.ellipsis,
+              _post.authorID,
+              maxLines: 1,
+              style: TextStyle(fontWeight: FontWeight.w600),
+            )),
+        Expanded(
+          flex: 1,
+          child: Padding(
+            padding: EdgeInsets.only(left: 8),
+            child: Text(
+              overflow: TextOverflow.ellipsis,
+              style:
+                  TextStyle(color: Colors.black45, fontWeight: FontWeight.w300),
+              "@" + _post.authorID,
+              maxLines: 1,
+            ),
+          ),
+        ),
+        Expanded(
+            flex: 1,
+            child: Padding(
+          padding: EdgeInsets.only(left: 8),
+          child: Text(
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 10),
+            DateFormat('yMMMd').add_Hm().format(_post.createdAt),
+            maxLines: 1,
+          ),
+        ))
+      ],
+    );
+    final textContent = Text(_post.content);
+
+    final text = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [header, textContent],
+    );
+
+    var main = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        userPicture,
+        Expanded(
+            child: Padding(
+          padding: EdgeInsets.only(left: 16, right: 16),
+          child: text,
+        ))
+      ],
+    );
+
+    var actions = Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        IconButton(
+            onPressed: () {}, icon: Icon(Icons.favorite_outline_outlined))
+      ],
+    );
+
+    return Container(
+      constraints: BoxConstraints(maxWidth: 10),
+      padding: EdgeInsets.only(left: 16, right: 16),
+      child: Column(
+        children: [main, actions],
+      ),
+    );
+  }
+
+  _NewsFeedItemState(this._post);
 }

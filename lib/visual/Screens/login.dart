@@ -307,7 +307,7 @@ class RegisterFormState extends State<RegisterForm> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset('assets/iconos/logo.png'),
+            Image.asset('assets/icons/logo.png'),
             const SizedBox(height: 16),
             Center(
               child: Form(

@@ -21,7 +21,7 @@ class AuthScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 child: AspectRatio(
                   aspectRatio: 1,
-                  child: Image.asset('images/logo/UGMA-LOGO.png'),
+                  child: Image.asset('assets/images/logo/UGMA-LOGO.png'),
                 ),
               );
             },

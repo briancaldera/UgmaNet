@@ -1,11 +1,20 @@
+import 'package:UgmaNet/models/profile.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 abstract class UserService {
   Future<User?> getUser(String id);
+
   Future<User?> getCurrentUser();
+
+  Future<Profile?> getProfile(String id);
+
+  Future<Profile?> createProfile(Map<String, String> data);
 }
 
 class UserServiceImpl implements UserService {
+  static const String PROFILE_TABLE = 'profiles';
+
   static UserService? _instance = null;
 
   static UserService get instance {
@@ -14,6 +23,7 @@ class UserServiceImpl implements UserService {
     return _instance!;
   }
 
+  final FirebaseFirestore db = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
 
   @override
@@ -23,6 +33,49 @@ class UserServiceImpl implements UserService {
   Future<User?> getUser(String id) {
     // TODO: implement getUser
     throw UnimplementedError();
+  }
+
+  @override
+  Future<Profile?> getProfile(String id) async {
+    final profileColl = db.collection(PROFILE_TABLE);
+
+    final querySnapshot =
+        await profileColl.where('userID', isEqualTo: id).get();
+
+    return querySnapshot.docs.map(_snapshotToProfile).toList().firstOrNull;
+  }
+
+  static Profile _snapshotToProfile(DocumentSnapshot<Object?> doc) {
+    final userID = doc.get('userID');
+    final firstName = doc.get('firstName');
+    final lastName = doc.get('lastName');
+
+    return Profile(doc.id, userID, firstName, lastName);
+  }
+
+  @override
+  Future<Profile?> createProfile(
+      [Map<String, String> data = const {
+        'firstName': '',
+        'lastName': ''
+      }]) async {
+    final user = await getCurrentUser();
+
+    final userID = user?.uid;
+
+    if (userID == null) throw Exception("Usuario debe estar logueado");
+
+    CollectionReference collectionReferencePosts = db.collection(PROFILE_TABLE);
+
+    final docRef = await collectionReferencePosts.add({
+      'userID': userID,
+      'firstName': data['firstName'],
+      'lastName': data['lastName'],
+    });
+
+    final snapshot = await docRef.get();
+
+    return _snapshotToProfile(snapshot);
   }
 
   UserServiceImpl();

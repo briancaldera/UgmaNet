@@ -12,6 +12,6 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
             useMaterial3: true,
             colorSchemeSeed: const Color.fromARGB(255, 33, 72, 243)),
-        home: const AuthScreen());
+        home: AuthScreen());
   }
 }

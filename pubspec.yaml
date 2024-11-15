@@ -41,6 +41,8 @@ dependencies:
   firebase_core: ^2.32.0
   cloud_firestore: ^4.17.2
   firebase_ui_auth: ^1.13.0
+  flutter_form_builder: ^9.5.0
+  form_builder_validators: ^11.0.0
 dev_dependencies:
   flutter_launcher_icons: "^0.13.1"
   flutter_test:

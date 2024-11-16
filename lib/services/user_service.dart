@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 abstract class UserService {
+  User? get user;
+  Profile? get profile;
   Future<User?> getUser(String id);
 
   Future<User?> getCurrentUser();
@@ -25,9 +27,11 @@ class UserServiceImpl implements UserService {
 
   final FirebaseFirestore db = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
+  @override
   User? get user => _auth.currentUser;
   // backed field
   Profile? _profile;
+  @override
   Profile? get profile => _profile;
 
   @override
@@ -72,9 +76,13 @@ class UserServiceImpl implements UserService {
 
     CollectionReference collectionReferencePosts = db.collection(PROFILE_TABLE);
 
+    // Chequea que el user no tenga ya creado un perfil
     final res = await collectionReferencePosts.where('userID', isEqualTo: userID).count().get();
-
     if (res.count! > 0) throw Exception('Usuario ya posee un perfil');
+
+    // Chequea que el username sea unico
+    final coll = await collectionReferencePosts.where('username', isEqualTo: data['username']).count().get();
+    if (res.count! > 0) throw {'error': 'El nombre de usuario ya ha sido tomado'};
 
     final docRef = await collectionReferencePosts.add({
       'userID': userID,

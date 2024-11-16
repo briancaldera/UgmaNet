@@ -13,21 +13,23 @@ class CreateProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     final future = _checkProfile();
 
-    return FutureBuilder(future: future, builder: (context, snapshot) {
+    return FutureBuilder(
+        future: future,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const LoaderScreen();
+          }
 
-      if (snapshot.connectionState == ConnectionState.waiting) {
-        return const LoaderScreen();
-      }
+          if (!snapshot.hasData) {
+            return const Scaffold(
+              body: CreateProfileForm(),
+            );
+          }
 
-      if (!snapshot.hasData) {
-        return const Scaffold(body: CreateProfileForm(),);
-      }
-
-      return const HomeScreen();
-    });
+          return const HomeScreen();
+        });
   }
 
   Future<Profile?> _checkProfile() async {
@@ -60,28 +62,32 @@ class CreateProfileFormState extends State<CreateProfileForm> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           FormBuilderTextField(
-          decoration: const InputDecoration(
-            prefixIcon: Icon(Icons.alternate_email_rounded),
-            labelText: 'Nombre de usuario',
-            border: OutlineInputBorder(),
-            helperText: 'Máximo 20 caracteres. Se permiten . o _. Sin espacios en blanco.',
+            decoration: const InputDecoration(
+              prefixIcon: Icon(Icons.alternate_email_rounded),
+              labelText: 'Nombre de usuario',
+              border: OutlineInputBorder(),
+              helperText:
+                  'Máximo 20 caracteres. Se permiten . o _. Sin espacios en blanco.',
+            ),
+            name: 'username',
+            onChanged: (val) {},
+            validator: FormBuilderValidators.compose([
+              FormBuilderValidators.required(
+                  errorText: 'El campo es requerido'),
+              FormBuilderValidators.username(
+                  maxLength: 20,
+                  allowUnderscore: true,
+                  allowSpace: false,
+                  allowNumbers: true,
+                  allowDash: false,
+                  allowSpecialChar: false,
+                  allowDots: true,
+                  errorText: 'No válido')
+            ]),
           ),
-          name: 'username',
-          onChanged: (val) {},
-          validator: FormBuilderValidators.compose([
-            FormBuilderValidators.required(errorText: 'El campo es requerido'),
-            FormBuilderValidators.username(
-              maxLength: 20,
-              allowUnderscore: true,
-              allowSpace: false,
-              allowNumbers: true,
-              allowDash: false,
-              allowSpecialChar: false,
-              allowDots: true,
-                errorText: 'No válido')
-          ]),
-        ),
-          const SizedBox(height: 10,),
+          const SizedBox(
+            height: 10,
+          ),
           FormBuilderTextField(
             decoration: const InputDecoration(
               labelText: 'Nombre',
@@ -90,11 +96,14 @@ class CreateProfileFormState extends State<CreateProfileForm> {
             name: 'firstName',
             onChanged: (val) {},
             validator: FormBuilderValidators.compose([
-              FormBuilderValidators.required(errorText: 'El campo es requerido'),
+              FormBuilderValidators.required(
+                  errorText: 'El campo es requerido'),
               FormBuilderValidators.firstName(errorText: 'No válido')
             ]),
           ),
-          const SizedBox(height: 10,),
+          const SizedBox(
+            height: 10,
+          ),
           FormBuilderTextField(
             decoration: const InputDecoration(
               labelText: 'Apellido',
@@ -103,11 +112,14 @@ class CreateProfileFormState extends State<CreateProfileForm> {
             name: 'lastName',
             onChanged: (val) {},
             validator: FormBuilderValidators.compose([
-              FormBuilderValidators.required(errorText: 'El campo es requerido'),
+              FormBuilderValidators.required(
+                  errorText: 'El campo es requerido'),
               FormBuilderValidators.lastName(errorText: 'No válido')
             ]),
           ),
-          const SizedBox(height: 10,),
+          const SizedBox(
+            height: 10,
+          ),
           ElevatedButton(
             onPressed: () {
               if (_formKey.currentState!.validate()) {
@@ -123,9 +135,21 @@ class CreateProfileFormState extends State<CreateProfileForm> {
                   'username': values['username'] as String,
                 };
 
-                _userService.createProfile(data).then( (value) {
-                  if (context.mounted) Navigator.pushReplacement(context, MaterialPageRoute<HomeScreen>(builder: (context) => const HomeScreen()));
-                });
+                try {
+                  _userService.createProfile(data).then((value) {
+                    if (context.mounted) {
+                      Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute<HomeScreen>(
+                              builder: (context) => const HomeScreen()));
+                    }
+                  });
+                } on Map<String, String> catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(e['error'] ?? 'Ocurrió un error')));
+                  }
+                }
               }
             },
             child: const Text('Crear perfil'),

@@ -15,7 +15,7 @@ abstract class UserService {
 class UserServiceImpl implements UserService {
   static const String PROFILE_TABLE = 'profiles';
 
-  static UserService? _instance = null;
+  static UserService? _instance;
 
   static UserService get instance {
     _instance ??= UserServiceImpl();
@@ -25,6 +25,10 @@ class UserServiceImpl implements UserService {
 
   final FirebaseFirestore db = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
+  User? get user => _auth.currentUser;
+  // backed field
+  Profile? _profile;
+  Profile? get profile => _profile;
 
   @override
   Future<User?> getCurrentUser() async => _auth.currentUser;
@@ -49,15 +53,16 @@ class UserServiceImpl implements UserService {
     final userID = doc.get('userID');
     final firstName = doc.get('firstName');
     final lastName = doc.get('lastName');
+    final username = doc.get('username');
 
-    return Profile(doc.id, userID, firstName, lastName);
+    return Profile(doc.id, userID, username, firstName, lastName);
   }
 
   @override
   Future<Profile?> createProfile(
       [Map<String, String> data = const {
         'firstName': '',
-        'lastName': ''
+        'lastName': '',
       }]) async {
     final user = await getCurrentUser();
 
@@ -67,16 +72,35 @@ class UserServiceImpl implements UserService {
 
     CollectionReference collectionReferencePosts = db.collection(PROFILE_TABLE);
 
+    final res = await collectionReferencePosts.where('userID', isEqualTo: userID).count().get();
+
+    if (res.count! > 0) throw Exception('Usuario ya posee un perfil');
+
     final docRef = await collectionReferencePosts.add({
       'userID': userID,
       'firstName': data['firstName'],
       'lastName': data['lastName'],
+      'username': data['username'],
     });
 
     final snapshot = await docRef.get();
 
-    return _snapshotToProfile(snapshot);
+    final profile = _snapshotToProfile(snapshot);
+
+    _profile = profile;
+
+    return profile;
   }
 
-  UserServiceImpl();
+  Future<void> _observeUserChanges(User? user) async {
+    if (user == null) {
+      _profile = null;
+    } else {
+      _profile = await getProfile(user.uid);
+    }
+  }
+
+  UserServiceImpl() {
+    FirebaseAuth.instance.authStateChanges().listen(_observeUserChanges);
+  }
 }

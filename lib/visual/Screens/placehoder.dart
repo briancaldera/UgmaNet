@@ -53,7 +53,7 @@ class _Logo extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         //FlutterLogo(size: isSmallScreen ? 100 : 200),
-        Image.asset('assets/iconos/logo.png'),
+        Image.asset('assets/icons/logo.png'),
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: Text(

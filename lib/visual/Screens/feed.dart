@@ -1,7 +1,71 @@
+import 'package:UgmaNet/models/post.dart';
+import 'package:UgmaNet/models/profile.dart';
 import 'package:UgmaNet/services/firebase_service.dart';
 import 'package:UgmaNet/services/globals.dart';
+import 'package:UgmaNet/services/post_service.dart';
+import 'package:UgmaNet/services/user_service.dart';
+import 'package:UgmaNet/visual/Screens/post.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import 'package:get_time_ago/get_time_ago.dart';
+
+class NewsFeedTab extends StatefulWidget {
+  const NewsFeedTab({
+    super.key,
+  });
+
+  @override
+  State createState() => _NewsFeedTabState();
+}
+
+class _NewsFeedTabState extends State<NewsFeedTab> {
+  List<Post> _feedItems = [];
+  PostService postService = PostServiceImpl.instance;
+  UserService _userService = UserServiceImpl.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshFeed();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+        child: RefreshIndicator(
+      onRefresh: _refreshFeed,
+      child: Scaffold(
+        floatingActionButton: FloatingActionButton(
+            child: const Icon(Icons.add),
+            onPressed: () {
+              Navigator.push(
+                      context,
+                      MaterialPageRoute<CreatePostScreen>(
+                          builder: (context) => const CreatePostScreen()))
+                  .then((_) => setState(() {}));
+            }),
+        body: ListView.builder(
+          itemCount: _feedItems.length,
+          semanticChildCount: _feedItems.length,
+          itemBuilder: (BuildContext context, index) {
+            return NewsFeedItem(_feedItems[index]);
+          },
+        ),
+      ),
+    ));
+  }
+
+  Future<void> _refreshFeed() async {
+    final user = _userService.user;
+    final posts = await postService.getPosts(userID: user?.uid);
+
+    setState(() {
+      _feedItems = posts;
+    });
+  }
+}
 
 class NewsFeedPage1 extends StatefulWidget {
   const NewsFeedPage1({
@@ -215,17 +279,21 @@ class _NewsFeedPage1State extends State<NewsFeedPage1> {
 //-----------------------------Funciones y clases-----------------------------//
 
 class _AvatarImage extends StatelessWidget {
-  final String url;
+  final String? url;
+
   const _AvatarImage(this.url);
 
   @override
   Widget build(BuildContext context) {
+    dynamic image = url != null
+        ? NetworkImage(url!)
+        : const AssetImage('assets/images/user-placeholder.jpg');
+
     return Container(
       width: 60,
       height: 60,
       decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          image: DecorationImage(image: NetworkImage(url))),
+          shape: BoxShape.circle, image: DecorationImage(image: image)),
     );
   }
 }
@@ -234,6 +302,7 @@ class _AvatarImage extends StatelessWidget {
 
 class _ActionsRow extends StatefulWidget {
   final FeedItem item;
+
   const _ActionsRow({required this.item});
 
   @override
@@ -243,9 +312,9 @@ class _ActionsRow extends StatefulWidget {
 class _ActionsRowState extends State<_ActionsRow> {
   bool isLiked = false;
 
-  void toggleLike(){
+  void toggleLike() {
     setState(() {
-      isLiked? widget.item.likesCount--:widget.item.likesCount++;
+      isLiked ? widget.item.likesCount-- : widget.item.likesCount++;
       isLiked = !isLiked;
     });
   }
@@ -265,24 +334,22 @@ class _ActionsRowState extends State<_ActionsRow> {
           TextButton.icon(
             onPressed: () {},
             icon: const Icon(Icons.mode_comment_outlined),
-            label: Text(
-                widget.item.commentsCount == 0 ? '' : widget.item.commentsCount.toString()),
+            label: Text(widget.item.commentsCount == 0
+                ? ''
+                : widget.item.commentsCount.toString()),
           ),
           TextButton.icon(
             onPressed: () {},
             icon: const Icon(Icons.repeat_rounded),
-            label: Text(
-                widget.item.retweetsCount == 0 ? '' : widget.item.retweetsCount.toString()),
+            label: Text(widget.item.retweetsCount == 0
+                ? ''
+                : widget.item.retweetsCount.toString()),
           ),
-
           TextButton.icon(
               onPressed: toggleLike,
-              icon: Icon(
-                isLiked? Icons.favorite: Icons.favorite_border_sharp,
-                color: isLiked? Colors.red : Colors.grey),
-              label: Text(widget.item.likesCount.toString())
-          ),
-
+              icon: Icon(isLiked ? Icons.favorite : Icons.favorite_border_sharp,
+                  color: isLiked ? Colors.red : Colors.grey),
+              label: Text(widget.item.likesCount.toString())),
           IconButton(
             icon: const Icon(CupertinoIcons.share_up),
             onPressed: () {},
@@ -303,10 +370,7 @@ class MoreBottomSheet extends StatefulWidget {
 }
 
 class _MoreBottomSheetState extends State<MoreBottomSheet> {
-  User user = User(
-      fullName: "Default",
-      imageUrl: "https://picsum.photos/id/1062/80/80",
-      tipo: "estudiante");
+  User user = User(fullName: "Default", tipo: "estudiante");
 
   @override
   void initState() {
@@ -327,6 +391,10 @@ class _MoreBottomSheetState extends State<MoreBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    dynamic bgImage = user.imageUrl != null
+        ? NetworkImage(user.imageUrl!)
+        : const AssetImage('assets/images/user-placeholder.jpg');
+
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: const BoxDecoration(
@@ -340,14 +408,15 @@ class _MoreBottomSheetState extends State<MoreBottomSheet> {
             children: [
               CircleAvatar(
                 radius: 30.0,
-                backgroundImage: NetworkImage(user.imageUrl),
+                backgroundImage: bgImage,
               ),
               const SizedBox(width: 16.0),
               Text(
                 user.fullName,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
-              const Spacer(), // Add a Spacer to push the "more" button to the right
+              const Spacer(),
+              // Add a Spacer to push the "more" button to the right
               PopupMenuButton<String>(
                 icon: const Icon(Icons.more_vert),
                 itemBuilder: (BuildContext context) {
@@ -489,4 +558,166 @@ class _UploadNewState extends State<UploadNew> {
       ),
     );
   }
+}
+
+class NewsFeedItem extends StatefulWidget {
+  final Post post;
+
+  const NewsFeedItem(this.post, {super.key});
+
+  @override
+  State createState() => _NewsFeedItemState();
+}
+
+class _NewsFeedItemState extends State<NewsFeedItem> {
+  late Post _post;
+  final UserService _userService = UserServiceImpl.instance;
+  final PostService _postService = PostServiceImpl.instance;
+  bool _isLikedByUser = false;
+  int _likesCount = 0;
+
+  Profile? _profile;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _post = widget.post;
+    _isLikedByUser = _post.isLikedByUser;
+    _likesCount = _post.likesCount;
+
+    _userService.getProfile(_post.authorID).then((profile) => setState(() {
+          _profile = profile;
+        }));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final userPicture = CircleAvatar(
+      radius: 24,
+      backgroundImage: AssetImage(
+        'assets/images/user-placeholder.jpg',
+      ),
+    );
+
+    final header = Row(
+      textBaseline: TextBaseline.alphabetic,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Container(
+          constraints: const BoxConstraints(maxWidth: 150),
+          child: Text(
+            overflow: TextOverflow.ellipsis,
+            _profile != null
+                ? '${_profile?.firstName} ${_profile?.lastName}'
+                : 'FirstName LastName',
+            maxLines: 1,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+        Container(
+          constraints: const BoxConstraints(maxWidth: 110),
+          child: Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: Text(
+              '@${_profile?.username}',
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                  color: Colors.black45, fontWeight: FontWeight.w300),
+              maxLines: 1,
+            ),
+          ),
+        ),
+        Expanded(
+            flex: 1,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Text(
+                textAlign: TextAlign.right,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 10),
+                GetTimeAgo.parse(_post.createdAt, locale: 'es'),
+                maxLines: 1,
+              ),
+            ))
+      ],
+    );
+    final textContent = Text(_post.content);
+
+    final text = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [header, textContent],
+    );
+
+    var main = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        userPicture,
+        Expanded(
+            child: Padding(
+          padding: const EdgeInsets.only(left: 16, right: 16),
+          child: text,
+        ))
+      ],
+    );
+
+    var actions = Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Row(
+
+          children: [
+            Text(_likesCount.toString(), style: const TextStyle(fontSize: 10),),
+            IconButton(
+                onPressed: () async {
+                  final user = _userService.user;
+                  if (user != null) {
+                    if (_isLikedByUser) {
+                      final res = _postService.unlikePost(_post.id, user.uid);
+                      if (await res) {
+                        setState(() {
+                          _isLikedByUser = false;
+                          --_likesCount;
+                        });
+                      }
+                    } else {
+                      final res = _postService.likePost(_post.id, user.uid);
+                      if (await res) {
+                        setState(() {
+                          _isLikedByUser = true;
+                          ++_likesCount;
+                        });
+                      }
+                    }
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Debe iniciar sesión')));
+                  }
+                },
+                icon: _isLikedByUser
+                    ? const Icon(
+                        Icons.favorite_rounded,
+                        color: Colors.pink,
+                      )
+                    : const Icon(
+                        Icons.favorite_outline_outlined,
+                      ))
+          ],
+        )
+      ],
+    );
+
+    return Skeletonizer(
+        enabled: _profile == null,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 10),
+          padding: const EdgeInsets.only(left: 16, right: 16),
+          child: Column(
+            children: [main, actions],
+          ),
+        ));
+  }
+
+  _NewsFeedItemState();
 }

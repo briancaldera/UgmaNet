@@ -1,11 +1,15 @@
 import 'package:UgmaNet/models/post.dart';
+import 'package:UgmaNet/models/profile.dart';
 import 'package:UgmaNet/services/firebase_service.dart';
 import 'package:UgmaNet/services/globals.dart';
 import 'package:UgmaNet/services/post_service.dart';
 import 'package:UgmaNet/services/user_service.dart';
+import 'package:UgmaNet/visual/Screens/post.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import 'package:get_time_ago/get_time_ago.dart';
 
 class NewsFeedTab extends StatefulWidget {
   const NewsFeedTab({
@@ -19,6 +23,7 @@ class NewsFeedTab extends StatefulWidget {
 class _NewsFeedTabState extends State<NewsFeedTab> {
   List<Post> _feedItems = [];
   PostService postService = PostServiceImpl.instance;
+  UserService _userService = UserServiceImpl.instance;
 
   @override
   void initState() {
@@ -31,17 +36,21 @@ class _NewsFeedTabState extends State<NewsFeedTab> {
     return Center(
         child: RefreshIndicator(
       onRefresh: _refreshFeed,
-      child: Container(
-        child: ListView.separated(
+      child: Scaffold(
+        floatingActionButton: FloatingActionButton(
+            child: const Icon(Icons.add),
+            onPressed: () {
+              Navigator.push(
+                      context,
+                      MaterialPageRoute<CreatePostScreen>(
+                          builder: (context) => const CreatePostScreen()))
+                  .then((_) => setState(() {}));
+            }),
+        body: ListView.builder(
           itemCount: _feedItems.length,
-          separatorBuilder: (BuildContext context, int index) {
-            return const Divider(
-              thickness: .4,
-            );
-          },
-          itemBuilder: (BuildContext context, int index) {
-            final feed = _feedItems[index];
-            return NewsFeedItem(feed);
+          semanticChildCount: _feedItems.length,
+          itemBuilder: (BuildContext context, index) {
+            return NewsFeedItem(_feedItems[index]);
           },
         ),
       ),
@@ -49,7 +58,8 @@ class _NewsFeedTabState extends State<NewsFeedTab> {
   }
 
   Future<void> _refreshFeed() async {
-    final posts = await postService.getPosts();
+    final user = _userService.user;
+    final posts = await postService.getPosts(userID: user?.uid);
 
     setState(() {
       _feedItems = posts;
@@ -551,21 +561,39 @@ class _UploadNewState extends State<UploadNew> {
 }
 
 class NewsFeedItem extends StatefulWidget {
-  final Post _post;
-  final UserService _userService = UserServiceImpl.instance;
+  final Post post;
 
-  NewsFeedItem(this._post, {super.key});
+  const NewsFeedItem(this.post, {super.key});
 
   @override
-  State createState() => _NewsFeedItemState(_post);
+  State createState() => _NewsFeedItemState();
 }
 
 class _NewsFeedItemState extends State<NewsFeedItem> {
-  final Post _post;
+  late Post _post;
+  final UserService _userService = UserServiceImpl.instance;
+  final PostService _postService = PostServiceImpl.instance;
+  bool _isLikedByUser = false;
+  int _likesCount = 0;
+
+  Profile? _profile;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _post = widget.post;
+    _isLikedByUser = _post.isLikedByUser;
+    _likesCount = _post.likesCount;
+
+    _userService.getProfile(_post.authorID).then((profile) => setState(() {
+          _profile = profile;
+        }));
+  }
 
   @override
   Widget build(BuildContext context) {
-    const userPicture = CircleAvatar(
+    final userPicture = CircleAvatar(
       radius: 24,
       backgroundImage: AssetImage(
         'assets/images/user-placeholder.jpg',
@@ -575,24 +603,28 @@ class _NewsFeedItemState extends State<NewsFeedItem> {
     final header = Row(
       textBaseline: TextBaseline.alphabetic,
       crossAxisAlignment: CrossAxisAlignment.baseline,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(
-            flex: 2,
-            child: Text(
-              overflow: TextOverflow.ellipsis,
-              _post.authorID,
-              maxLines: 1,
-              style: TextStyle(fontWeight: FontWeight.w600),
-            )),
-        Expanded(
-          flex: 1,
+        Container(
+          constraints: const BoxConstraints(maxWidth: 150),
+          child: Text(
+            overflow: TextOverflow.ellipsis,
+            _profile != null
+                ? '${_profile?.firstName} ${_profile?.lastName}'
+                : 'FirstName LastName',
+            maxLines: 1,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+        ),
+        Container(
+          constraints: const BoxConstraints(maxWidth: 110),
           child: Padding(
-            padding: EdgeInsets.only(left: 8),
+            padding: const EdgeInsets.only(left: 8),
             child: Text(
+              '@${_profile?.username}',
               overflow: TextOverflow.ellipsis,
-              style:
-                  TextStyle(color: Colors.black45, fontWeight: FontWeight.w300),
-              "@" + _post.authorID,
+              style: const TextStyle(
+                  color: Colors.black45, fontWeight: FontWeight.w300),
               maxLines: 1,
             ),
           ),
@@ -600,14 +632,15 @@ class _NewsFeedItemState extends State<NewsFeedItem> {
         Expanded(
             flex: 1,
             child: Padding(
-          padding: EdgeInsets.only(left: 8),
-          child: Text(
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 10),
-            DateFormat('yMMMd').add_Hm().format(_post.createdAt),
-            maxLines: 1,
-          ),
-        ))
+              padding: const EdgeInsets.only(left: 8),
+              child: Text(
+                textAlign: TextAlign.right,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 10),
+                GetTimeAgo.parse(_post.createdAt, locale: 'es'),
+                maxLines: 1,
+              ),
+            ))
       ],
     );
     final textContent = Text(_post.content);
@@ -623,7 +656,7 @@ class _NewsFeedItemState extends State<NewsFeedItem> {
         userPicture,
         Expanded(
             child: Padding(
-          padding: EdgeInsets.only(left: 16, right: 16),
+          padding: const EdgeInsets.only(left: 16, right: 16),
           child: text,
         ))
       ],
@@ -632,19 +665,59 @@ class _NewsFeedItemState extends State<NewsFeedItem> {
     var actions = Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        IconButton(
-            onPressed: () {}, icon: Icon(Icons.favorite_outline_outlined))
+        Row(
+
+          children: [
+            Text(_likesCount.toString(), style: const TextStyle(fontSize: 10),),
+            IconButton(
+                onPressed: () async {
+                  final user = _userService.user;
+                  if (user != null) {
+                    if (_isLikedByUser) {
+                      final res = _postService.unlikePost(_post.id, user.uid);
+                      if (await res) {
+                        setState(() {
+                          _isLikedByUser = false;
+                          --_likesCount;
+                        });
+                      }
+                    } else {
+                      final res = _postService.likePost(_post.id, user.uid);
+                      if (await res) {
+                        setState(() {
+                          _isLikedByUser = true;
+                          ++_likesCount;
+                        });
+                      }
+                    }
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Debe iniciar sesión')));
+                  }
+                },
+                icon: _isLikedByUser
+                    ? const Icon(
+                        Icons.favorite_rounded,
+                        color: Colors.pink,
+                      )
+                    : const Icon(
+                        Icons.favorite_outline_outlined,
+                      ))
+          ],
+        )
       ],
     );
 
-    return Container(
-      constraints: BoxConstraints(maxWidth: 10),
-      padding: EdgeInsets.only(left: 16, right: 16),
-      child: Column(
-        children: [main, actions],
-      ),
-    );
+    return Skeletonizer(
+        enabled: _profile == null,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 10),
+          padding: const EdgeInsets.only(left: 16, right: 16),
+          child: Column(
+            children: [main, actions],
+          ),
+        ));
   }
 
-  _NewsFeedItemState(this._post);
+  _NewsFeedItemState();
 }

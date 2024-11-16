@@ -5,7 +5,8 @@ class Post {
   final List<String> images;
   final int likesCount;
   final DateTime createdAt;
+  final bool isLikedByUser;
 
   Post(this.authorID, this.content, this.images, this.likesCount,
-      this.createdAt, this.id);
+      this.createdAt, this.id, this.isLikedByUser);
 }

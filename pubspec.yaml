@@ -44,6 +44,8 @@ dependencies:
   flutter_form_builder: ^9.5.0
   form_builder_validators: ^11.0.0
   image_picker: ^1.1.2
+  skeletonizer: ^1.4.2
+  get_time_ago: ^2.0.0
 dev_dependencies:
   flutter_launcher_icons: "^0.13.1"
   flutter_test:

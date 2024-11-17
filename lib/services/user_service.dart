@@ -133,6 +133,8 @@ class UserServiceImpl implements UserService {
         final res = await fileNode.putFile(File(file.path), metadata);
         final pfpUrl = await res.ref.getDownloadURL();
 
+        await currentUser.updatePhotoURL(pfpUrl);
+
         final querySnapshot = await db.collection(PROFILE_TABLE).where('userID', isEqualTo: currentUser.uid).get();
         final profileRef = querySnapshot.docs.first.reference;
 

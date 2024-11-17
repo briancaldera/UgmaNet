@@ -48,6 +48,7 @@ dependencies:
   get_time_ago: ^2.0.0
   firebase_storage: ^11.7.7
   uuid: ^4.5.1
+  path: ^1.9.0
 dev_dependencies:
   flutter_launcher_icons: "^0.13.1"
   flutter_test:

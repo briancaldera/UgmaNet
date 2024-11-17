@@ -7,9 +7,8 @@ import 'package:UgmaNet/services/user_service.dart';
 import 'package:UgmaNet/visual/Screens/post.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 import 'package:get_time_ago/get_time_ago.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class NewsFeedTab extends StatefulWidget {
   const NewsFeedTab({
@@ -21,9 +20,9 @@ class NewsFeedTab extends StatefulWidget {
 }
 
 class _NewsFeedTabState extends State<NewsFeedTab> {
-  List<Post> _feedItems = [];
-  PostService postService = PostServiceImpl.instance;
-  UserService _userService = UserServiceImpl.instance;
+  List<Post> _feedItems = List<Post>.empty();
+  final PostService _postService = PostServiceImpl.instance;
+  final UserService _userService = UserServiceImpl.instance;
 
   @override
   void initState() {
@@ -59,7 +58,7 @@ class _NewsFeedTabState extends State<NewsFeedTab> {
 
   Future<void> _refreshFeed() async {
     final user = _userService.user;
-    final posts = await postService.getPosts(userID: user?.uid);
+    final posts = await _postService.getPosts(userID: user?.uid);
 
     setState(() {
       _feedItems = posts;
@@ -593,7 +592,7 @@ class _NewsFeedItemState extends State<NewsFeedItem> {
 
   @override
   Widget build(BuildContext context) {
-    final userPicture = CircleAvatar(
+    const userPicture = CircleAvatar(
       radius: 24,
       backgroundImage: AssetImage(
         'assets/images/user-placeholder.jpg',
@@ -650,25 +649,30 @@ class _NewsFeedItemState extends State<NewsFeedItem> {
       children: [header, textContent],
     );
 
-    var main = Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        userPicture,
-        Expanded(
-            child: Padding(
-          padding: const EdgeInsets.only(left: 16, right: 16),
-          child: text,
-        ))
-      ],
+    var main = Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          userPicture,
+          Expanded(
+              child: Padding(
+            padding: const EdgeInsets.only(left: 16, right: 16),
+            child: text,
+          ))
+        ],
+      ),
     );
 
     var actions = Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         Row(
-
           children: [
-            Text(_likesCount.toString(), style: const TextStyle(fontSize: 10),),
+            Text(
+              _likesCount.toString(),
+              style: const TextStyle(fontSize: 10),
+            ),
             IconButton(
                 onPressed: () async {
                   final user = _userService.user;
@@ -708,16 +712,42 @@ class _NewsFeedItemState extends State<NewsFeedItem> {
       ],
     );
 
+    final imageSection = ImagePreview(widget.post.images);
+
+    final children = [main,  imageSection, actions];
+    // if (widget.post.images.isNotEmpty) children.add(Expanded(flex: 1, child: ));
+
     return Skeletonizer(
         enabled: _profile == null,
         child: Container(
           constraints: const BoxConstraints(maxWidth: 10),
-          padding: const EdgeInsets.only(left: 16, right: 16),
           child: Column(
-            children: [main, actions],
+            children: children,
           ),
         ));
   }
 
   _NewsFeedItemState();
+}
+
+class ImagePreview extends StatelessWidget {
+  final List<String> _imagesUrl;
+
+  const ImagePreview(this._imagesUrl, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+
+    final children = _imagesUrl.map((url) => Container(
+      decoration: const BoxDecoration(color: Colors.black),
+      child: Image.network(url)
+    ));
+
+    return GridView.count(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        crossAxisCount: _imagesUrl.length > 1 ? 2 : 1,
+        children: children.toList()
+    );
+  }
 }

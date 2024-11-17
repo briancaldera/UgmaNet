@@ -46,6 +46,8 @@ dependencies:
   image_picker: ^1.1.2
   skeletonizer: ^1.4.2
   get_time_ago: ^2.0.0
+  firebase_storage: ^11.7.7
+  uuid: ^4.5.1
 dev_dependencies:
   flutter_launcher_icons: "^0.13.1"
   flutter_test:

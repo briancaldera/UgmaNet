@@ -592,11 +592,15 @@ class _NewsFeedItemState extends State<NewsFeedItem> {
 
   @override
   Widget build(BuildContext context) {
-    const userPicture = CircleAvatar(
+
+    final profile = _profile;
+
+    dynamic bgImage = profile?.pictureUrl != null ? NetworkImage(profile!.pictureUrl!) : const AssetImage(
+      'assets/images/user-placeholder.jpg');
+
+    final userPicture = CircleAvatar(
       radius: 24,
-      backgroundImage: AssetImage(
-        'assets/images/user-placeholder.jpg',
-      ),
+      backgroundImage: bgImage,
     );
 
     final header = Row(

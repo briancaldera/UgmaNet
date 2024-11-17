@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:UgmaNet/services/user_service.dart';
 import 'package:UgmaNet/visual/Screens/Home.dart';
 import 'package:UgmaNet/visual/Screens/Loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../models/profile.dart';
 
 class CreateProfileScreen extends StatelessWidget {
@@ -156,6 +159,86 @@ class CreateProfileFormState extends State<CreateProfileForm> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class UpdateProfilePictureScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(child: UpdateProfilePictureForm()),
+    );
+  }
+}
+
+class UpdateProfilePictureForm extends StatefulWidget {
+  UpdateProfilePictureForm({super.key});
+
+  @override
+  State createState() {
+    return UpdateProfilePictureFormState();
+  }
+}
+
+class UpdateProfilePictureFormState extends State<UpdateProfilePictureForm> {
+  UserService _userService = UserServiceImpl.instance;
+  XFile? _file;
+  final ImagePicker _picker = ImagePicker();
+  dynamic _pickImageError;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    dynamic bgImage = _file != null
+        ? FileImage(File(_file!.path))
+        : const AssetImage('assets/images/user-placeholder.jpg');
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        IconButton(
+            onPressed: () async {
+              if (!context.mounted) return;
+
+              try {
+                final XFile? pickedFiles = await _picker.pickImage(
+                  source: ImageSource.gallery,
+                  maxWidth: 2000,
+                  maxHeight: 2000,
+                );
+
+                setState(() {
+                  _file = pickedFiles;
+                });
+              } catch (e) {
+                setState(() {
+                  _pickImageError = e;
+                });
+              }
+            },
+            icon: CircleAvatar(
+              radius: 48,
+              backgroundImage: bgImage,
+            )),
+        TextButton(
+            onPressed: () async {
+              final file = _file;
+              if (file == null) return;
+
+              try {
+                await _userService.updateProfilePicture(file);
+                if (context.mounted) Navigator.pop(context);
+              } catch (e) {
+                if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ocurrió un error al intentar actualizar la foto de perfil')));
+              }
+            },
+            child: const Text('Guardar'))
+      ],
     );
   }
 }

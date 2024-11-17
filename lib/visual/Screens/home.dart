@@ -61,10 +61,10 @@ class HomeScreenState extends State<HomeScreen> {
                               })
                             ],
                             children: [
-                              Form(child: Column(children: [
-                                TextFormField(controller: nameTextController, maxLines: 1,
-                                  decoration: InputDecoration(labelText: 'Nombre'), )
-                              ],))
+                              TextButton(onPressed: () {
+                                Navigator.push(context, MaterialPageRoute<UpdateProfilePictureScreen>(builder: (context) => UpdateProfilePictureScreen()));
+
+                              }, child: const Text('Cambiar foto'))
                             ],
                           ),
                         ),

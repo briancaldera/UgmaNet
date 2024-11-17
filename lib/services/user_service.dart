@@ -1,6 +1,12 @@
+import 'dart:io';
+
 import 'package:UgmaNet/models/profile.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart';
+import 'package:uuid/uuid.dart';
 
 abstract class UserService {
   User? get user;
@@ -12,6 +18,8 @@ abstract class UserService {
   Future<Profile?> getProfile(String id);
 
   Future<Profile?> createProfile(Map<String, String> data);
+
+  Future<void> updateProfilePicture(XFile? file);
 }
 
 class UserServiceImpl implements UserService {
@@ -58,8 +66,9 @@ class UserServiceImpl implements UserService {
     final firstName = doc.get('firstName');
     final lastName = doc.get('lastName');
     final username = doc.get('username');
+    final pictureUrl = doc.get('pictureUrl');
 
-    return Profile(doc.id, userID, username, firstName, lastName);
+    return Profile(doc.id, userID, username, firstName, lastName, pictureUrl);
   }
 
   @override
@@ -98,6 +107,44 @@ class UserServiceImpl implements UserService {
     _profile = profile;
 
     return profile;
+  }
+
+  @override
+  Future<void> updateProfilePicture(XFile? file) async {
+    final currentUser = user;
+    if (currentUser == null) throw Exception('Usuario debe estar logueado');
+
+    if (file != null) {
+      try {
+        final rootFolder = FirebaseStorage.instance.ref();
+        final pfpFolder = rootFolder.child('profiles').child(currentUser.uid).child('picture');
+
+        final fileID = Uuid().v4();
+        final fileExtension = extension(file.path);
+        final fileName = '$fileID$fileExtension';
+
+        SettableMetadata? metadata;
+
+        if (file.mimeType != null) {
+          metadata = SettableMetadata(contentType: file.mimeType);
+        }
+
+        final fileNode = pfpFolder.child(fileName);
+        final res = await fileNode.putFile(File(file.path), metadata);
+        final pfpUrl = await res.ref.getDownloadURL();
+
+        final querySnapshot = await db.collection(PROFILE_TABLE).where('userID', isEqualTo: currentUser.uid).get();
+        final profileRef = querySnapshot.docs.first.reference;
+
+        profileRef.update({'pictureUrl': pfpUrl});
+
+        _profile = _snapshotToProfile(await profileRef.get());
+      } catch (e) {
+        rethrow;
+      }
+    } else {
+      // todo: clean user profile here
+    }
   }
 
   Future<void> _observeUserChanges(User? user) async {

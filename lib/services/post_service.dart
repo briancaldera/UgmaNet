@@ -1,10 +1,15 @@
+import 'dart:io';
+import 'package:path/path.dart' show extension;
 import 'package:UgmaNet/models/post.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:uuid/uuid.dart';
 
 abstract class PostService {
   Future<List<Post>> getPosts({String? userID});
 
-  Future<Post> savePost(String content, String userID);
+  Future<Post> savePost(String content, String userID, {List<XFile>? images});
 
   Future<bool> likePost(String postID, String userID);
 
@@ -31,16 +36,20 @@ class PostServiceImpl implements PostService {
     final CollectionReference collectionReferencePosts =
         db.collection(TABLE_NAME);
 
-    final QuerySnapshot querySnapshot = await collectionReferencePosts.orderBy('createdAt', descending: true).get();
+    final QuerySnapshot querySnapshot = await collectionReferencePosts
+        .orderBy('createdAt', descending: true)
+        .get();
 
-    final List<Post> postsList =
-        querySnapshot.docs.map((item) => _snapshotToPost(item, userID: userID)).toList();
+    final List<Post> postsList = querySnapshot.docs
+        .map((item) => _snapshotToPost(item, userID: userID))
+        .toList();
 
     return postsList;
   }
 
   @override
-  Future<Post> savePost(String content, String userID) async {
+  Future<Post> savePost(String content, String userID,
+      {List<XFile>? images}) async {
     CollectionReference collectionReferencePosts = db.collection(TABLE_NAME);
 
     // Create a new document in the "Feed" collection with a random ID
@@ -51,6 +60,47 @@ class PostServiceImpl implements PostService {
       "createdAt": Timestamp.now(),
       "likes": [],
     });
+
+    if (images != null) {
+      try {
+        final postFolder = FirebaseStorage.instance
+            .ref()
+            .child('posts')
+            .child(documentReference.id);
+
+        const idGen = Uuid();
+
+        final imagesUrl = <String>[];
+        for (var file in images) {
+
+          final mimeType = file.mimeType;
+
+          SettableMetadata? metadata;
+
+          if (mimeType != null) {
+            metadata = SettableMetadata(
+              contentType: mimeType,
+            );
+          }
+
+          final fileExtension = extension(file.path);
+          final fileName = '${idGen.v4()}$fileExtension';
+
+          final fileNode = postFolder.child(fileName);
+
+          final res = await fileNode.putFile(File(file.path), metadata);
+
+          final imageUrl = await res.ref.getDownloadURL();
+
+          imagesUrl.add(imageUrl);
+        }
+
+        await documentReference.update({'images': imagesUrl});
+      } catch (e) {
+        documentReference.delete();
+        rethrow;
+      }
+    }
 
     final doc = await documentReference.get();
 
@@ -68,7 +118,6 @@ class PostServiceImpl implements PostService {
       likes.add(userID);
       postRef.update({'likes': likes});
       return true;
-
     }
     return false;
   }
@@ -90,7 +139,7 @@ class PostServiceImpl implements PostService {
   @override
   Future<List<String>> getLikedUserIDList(String postID) async {
     final CollectionReference collectionReferencePosts =
-    db.collection(TABLE_NAME);
+        db.collection(TABLE_NAME);
 
     final snapshot = await collectionReferencePosts.doc(postID).get();
 
@@ -114,6 +163,7 @@ class PostServiceImpl implements PostService {
       isLikedByUser = likes.contains(userID);
     }
 
-    return Post(authorID, content, images, likesCount, createdAt, doc.id, isLikedByUser);
+    return Post(authorID, content, images, likesCount, createdAt, doc.id,
+        isLikedByUser);
   }
 }

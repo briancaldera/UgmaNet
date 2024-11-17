@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:UgmaNet/services/post_service.dart';
 import 'package:UgmaNet/services/user_service.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
@@ -10,8 +13,11 @@ class CreatePostScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: CreatePostForm(),
+    return Scaffold(
+      body: Container(
+        padding: const EdgeInsets.only(left: 16, right: 16),
+        child: const CreatePostForm(),
+      ),
     );
   }
 }
@@ -26,97 +32,197 @@ class CreatePostForm extends StatefulWidget {
 }
 
 class CreatePostFormState extends State<CreatePostForm> {
+  List<XFile> _mediaFileList = [];
+  dynamic _pickImageError;
+  String? _retrieveDataError;
+
   final _postFormKey = GlobalKey<FormBuilderState>();
   final PostService _postService = PostServiceImpl.instance;
   final UserService _userService = UserServiceImpl.instance;
-  final ImagePicker _imagePicker = ImagePicker();
+  final ImagePicker _picker = ImagePicker();
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: FormBuilder(
-        key: _postFormKey,
-        child: Flex(
-          direction: Axis.vertical,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            FormBuilderTextField(
-              name: 'content',
-              validator: FormBuilderValidators.compose([
-                FormBuilderValidators.required(),
-                FormBuilderValidators.maxLength(280,
-                    errorText:
-                        'Máximo número de caracteres alcanzado. Máximo 280.'),
-              ]),
+    return Column(
+      children: [
+        Expanded(
+          child: Center(
+            child: FormBuilder(
+              key: _postFormKey,
+              child: Flex(
+                direction: Axis.vertical,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  FormBuilderTextField(
+                    maxLines: 4,
+                    maxLength: 280,
+                    decoration: const InputDecoration(
+                      hintText: 'Escribe algo cool...',
+                      border: OutlineInputBorder(),
+                    ),
+                    name: 'content',
+                    validator: FormBuilderValidators.compose([
+                      FormBuilderValidators.required(),
+                      FormBuilderValidators.maxLength(280,
+                          errorText: 'Máximo número de caracteres alcanzado.'),
+                    ]),
+                  ),
+                  Row(
+                    textBaseline: TextBaseline.alphabetic,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    children: [
+                      IconButton(
+                          onPressed: () async {
+                            _onImageButtonPressed(ImageSource.gallery,
+                                context: context);
+                          },
+                          icon: const Icon(Icons.image_rounded)),
+                      TextButton(
+                        onPressed: () async {
+                          if (_postFormKey.currentState!.validate()) {
+                            final values = _postFormKey.currentState!.instantValue;
+          
+                            final content = values['content'] as String;
+          
+                            final user = await _userService.getCurrentUser();
+          
+                            if (user == null) {
+                              throw Exception('Usuario no ha iniciado sesion');
+                            }
+          
+                            try {
+                              await _postService.savePost(content, user.uid, images: _mediaFileList.isNotEmpty ? _mediaFileList : null);
+                              if (context.mounted) Navigator.pop(context);
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            'Ocurrió un error al intentar crear el post')));
+                              }
+                            }
+                          }
+                        },
+                        child: const Text('Crear post'),
+                      )
+                    ],
+                  ),
+                ],
+              ),
             ),
-
-            TextButton(
-              onPressed: () async {
-                if (_postFormKey.currentState!.validate()) {
-                  final values = _postFormKey.currentState!.instantValue;
-
-                  final content = values['content'] as String;
-
-                  final user = await _userService.getCurrentUser();
-
-                  if (user == null) {
-                    throw Exception('Usuario no ha iniciado sesion');
-                  }
-
-                  try {
-                    await _postService.savePost(content, user.uid);
-                    if (context.mounted) Navigator.pop(context);
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                          content: Text(
-                              'Ocurrió un error al intentar crear el post')));
-                    }
-                  }
-                }
-              },
-              child: const Text('Crear post'),
-            )
-          ],
+          ),
         ),
-      ),
+        Expanded(child: ImagesPreview(_mediaFileList))
+      ],
     );
   }
 
-  Future<void> _displayPickImageDialog(
-      BuildContext context, bool isMulti, OnPickImageCallback onPick) async {
-    return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Add optional parameters'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [],
-            ),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('CANCEL'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-              TextButton(
-                  child: const Text('PICK'),
-                  onPressed: () {
-                    final double width = 5000;
-                    final double height = 5000;
-                    final int quality = 100;
-                    final int? limit = 1;
-                    onPick(width, height, quality, limit);
-                    Navigator.of(context).pop();
-                  }),
-            ],
-          );
+  Future<void> _onImageButtonPressed(ImageSource source, {
+    required BuildContext context,
+  }) async {
+    if (!context.mounted) return;
+
+    try {
+      final List<XFile> pickedFiles = await _picker.pickMultiImage(
+        limit: 4,
+        maxHeight: 5000,
+        maxWidth: 5000,
+      );
+        setState(() {
+          _mediaFileList = pickedFiles.take(4).toList(growable: false);
         });
+    } catch (e) {
+      setState(() {
+        _pickImageError = e;
+      });
+    }
   }
 
+  Widget _previewImages() {
+    final Text? retrieveError = _getRetrieveErrorWidget();
+    if (retrieveError != null) {
+      return retrieveError;
+    }
+    if (_mediaFileList.isNotEmpty) {
+      return Semantics(
+        label: 'image_picker_example_picked_images',
+        child: ListView.builder(
+          key: UniqueKey(),
+          itemBuilder: (BuildContext context, int index) {
+            final String? mime = _mediaFileList[index].mimeType;
+
+            // Why network for web?
+            // See https://pub.dev/packages/image_picker_for_web#limitations-on-the-web-platform
+            return Semantics(
+                label: 'image_picker_example_picked_image',
+                child: kIsWeb
+                    ? Image.network(_mediaFileList[index].path)
+                    : Image.file(
+                  File(_mediaFileList[index].path),
+                  errorBuilder: (BuildContext context, Object error,
+                      StackTrace? stackTrace) {
+                    return const Center(
+                        child: Text('This image type is not supported'));
+                  },
+                ));
+          },
+          itemCount: _mediaFileList.length,
+        ),
+      );
+    } else if (_pickImageError != null) {
+      return Text(
+        'Pick image error: $_pickImageError',
+        textAlign: TextAlign.center,
+      );
+    } else {
+      return const Text(
+        'You have not yet picked an image.',
+        textAlign: TextAlign.center,
+      );
+    }
+  }
+
+  Text? _getRetrieveErrorWidget() {
+    if (_retrieveDataError != null) {
+      final Text result = Text(_retrieveDataError!);
+      _retrieveDataError = null;
+      return result;
+    }
+    return null;
+  }
+}
+
+class ImagesPreview extends StatelessWidget {
+  final List<XFile> _imagesList;
+
+  const ImagesPreview(this._imagesList, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.count(
+      crossAxisCount: 2,
+      children: _imagesList.map((file) => _previewImage(file)).toList(growable: false),
+    );
+  }
+
+  Widget _previewImage(XFile file) {
+    return Semantics(
+      label: 'image_picked',
+      child: Container(
+        decoration: const BoxDecoration(color: Colors.black),
+        child: kIsWeb ?
+        Image.network(file.path) : Image.file(
+          File(file.path), errorBuilder: (BuildContext context, Object error,
+            StackTrace? stackTrace) {
+          return const Center(
+              child:
+              Text('This image type is not supported'));
+        },),
+      ),
+    );
+  }
 }
 
 typedef OnPickImageCallback = void Function(

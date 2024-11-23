@@ -14,16 +14,15 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform
   );
 
-  if (kDebugMode) {
-    FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
-    FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
-    FirebaseStorage.instance.useStorageEmulator('localhost', 9199);
-    // firestore.settings = firestore.settings.copyWith(persistenceEnabled: false);
-  }
-  // var logger = Logger();
-  // List<FeedItem> lista = await getFeedItems();
-  // logger.d(lista[0].user.imageUrl);
+  if (kDebugMode) setupEmulators();
+
   runApp(const MyApp());
+}
+
+void setupEmulators() {
+  FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
+  FirebaseFirestore.instance.useFirestoreEmulator('localhost', 8080);
+  FirebaseStorage.instance.useStorageEmulator('localhost', 9199);
 }
 
 

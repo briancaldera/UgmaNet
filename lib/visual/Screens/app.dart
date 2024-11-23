@@ -8,10 +8,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'UgmaNet',
+        title: 'UGMAnet',
         theme: ThemeData(
             useMaterial3: true,
             colorSchemeSeed: const Color.fromARGB(255, 33, 72, 243)),
-        home: AuthScreen());
+        home: const AuthScreen());
   }
 }

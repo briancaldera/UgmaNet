@@ -163,16 +163,20 @@ class CreateProfileFormState extends State<CreateProfileForm> {
 }
 
 class UpdateProfilePictureScreen extends StatelessWidget {
+
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return const Scaffold(
       body: Center(child: UpdateProfilePictureForm()),
     );
   }
+
+  const UpdateProfilePictureScreen({super.key});
 }
 
 class UpdateProfilePictureForm extends StatefulWidget {
-  UpdateProfilePictureForm({super.key});
+  const UpdateProfilePictureForm({super.key});
 
   @override
   State createState() {
@@ -181,10 +185,9 @@ class UpdateProfilePictureForm extends StatefulWidget {
 }
 
 class UpdateProfilePictureFormState extends State<UpdateProfilePictureForm> {
-  UserService _userService = UserServiceImpl.instance;
+  final UserService _userService = UserServiceImpl.instance;
   XFile? _file;
   final ImagePicker _picker = ImagePicker();
-  dynamic _pickImageError;
 
   @override
   void initState() {
@@ -215,9 +218,7 @@ class UpdateProfilePictureFormState extends State<UpdateProfilePictureForm> {
                   _file = pickedFiles;
                 });
               } catch (e) {
-                setState(() {
-                  _pickImageError = e;
-                });
+                // todo catch error
               }
             },
             icon: CircleAvatar(

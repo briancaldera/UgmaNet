@@ -23,7 +23,7 @@ abstract class UserService {
 }
 
 class UserServiceImpl implements UserService {
-  static const String PROFILE_TABLE = 'profiles';
+  static const String profileTable = 'profiles';
 
   static UserService? _instance;
 
@@ -53,7 +53,7 @@ class UserServiceImpl implements UserService {
 
   @override
   Future<Profile?> getProfile(String id) async {
-    final profileColl = db.collection(PROFILE_TABLE);
+    final profileColl = db.collection(profileTable);
 
     final querySnapshot =
         await profileColl.where('userID', isEqualTo: id).get();
@@ -83,14 +83,14 @@ class UserServiceImpl implements UserService {
 
     if (userID == null) throw Exception("Usuario debe estar logueado");
 
-    CollectionReference collectionReferencePosts = db.collection(PROFILE_TABLE);
+    CollectionReference collectionReferencePosts = db.collection(profileTable);
 
     // Chequea que el user no tenga ya creado un perfil
     final res = await collectionReferencePosts.where('userID', isEqualTo: userID).count().get();
     if (res.count! > 0) throw Exception('Usuario ya posee un perfil');
 
     // Chequea que el username sea unico
-    final coll = await collectionReferencePosts.where('username', isEqualTo: data['username']).count().get();
+    await collectionReferencePosts.where('username', isEqualTo: data['username']).count().get();
     if (res.count! > 0) throw {'error': 'El nombre de usuario ya ha sido tomado'};
 
     final docRef = await collectionReferencePosts.add({
@@ -119,7 +119,7 @@ class UserServiceImpl implements UserService {
         final rootFolder = FirebaseStorage.instance.ref();
         final pfpFolder = rootFolder.child('profiles').child(currentUser.uid).child('picture');
 
-        final fileID = Uuid().v4();
+        final fileID = const Uuid().v4();
         final fileExtension = extension(file.path);
         final fileName = '$fileID$fileExtension';
 
@@ -135,7 +135,7 @@ class UserServiceImpl implements UserService {
 
         await currentUser.updatePhotoURL(pfpUrl);
 
-        final querySnapshot = await db.collection(PROFILE_TABLE).where('userID', isEqualTo: currentUser.uid).get();
+        final querySnapshot = await db.collection(profileTable).where('userID', isEqualTo: currentUser.uid).get();
         final profileRef = querySnapshot.docs.first.reference;
 
         profileRef.update({'pictureUrl': pfpUrl});

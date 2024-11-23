@@ -32,8 +32,6 @@ class CreatePostForm extends StatefulWidget {
 
 class CreatePostFormState extends State<CreatePostForm> {
   List<XFile> _mediaFileList = [];
-  dynamic _pickImageError;
-  String? _retrieveDataError;
 
   final _postFormKey = GlobalKey<FormBuilderState>();
   final PostService _postService = PostServiceImpl.instance;
@@ -133,63 +131,8 @@ class CreatePostFormState extends State<CreatePostForm> {
           _mediaFileList = pickedFiles.take(4).toList(growable: false);
         });
     } catch (e) {
-      setState(() {
-        _pickImageError = e;
-      });
+      // todo handle error
     }
-  }
-
-  Widget _previewImages() {
-    final Text? retrieveError = _getRetrieveErrorWidget();
-    if (retrieveError != null) {
-      return retrieveError;
-    }
-    if (_mediaFileList.isNotEmpty) {
-      return Semantics(
-        label: 'image_picker_example_picked_images',
-        child: ListView.builder(
-          key: UniqueKey(),
-          itemBuilder: (BuildContext context, int index) {
-            final String? mime = _mediaFileList[index].mimeType;
-
-            // Why network for web?
-            // See https://pub.dev/packages/image_picker_for_web#limitations-on-the-web-platform
-            return Semantics(
-                label: 'image_picker_example_picked_image',
-                child: kIsWeb
-                    ? Image.network(_mediaFileList[index].path)
-                    : Image.file(
-                  File(_mediaFileList[index].path),
-                  errorBuilder: (BuildContext context, Object error,
-                      StackTrace? stackTrace) {
-                    return const Center(
-                        child: Text('This image type is not supported'));
-                  },
-                ));
-          },
-          itemCount: _mediaFileList.length,
-        ),
-      );
-    } else if (_pickImageError != null) {
-      return Text(
-        'Pick image error: $_pickImageError',
-        textAlign: TextAlign.center,
-      );
-    } else {
-      return const Text(
-        'You have not yet picked an image.',
-        textAlign: TextAlign.center,
-      );
-    }
-  }
-
-  Text? _getRetrieveErrorWidget() {
-    if (_retrieveDataError != null) {
-      final Text result = Text(_retrieveDataError!);
-      _retrieveDataError = null;
-      return result;
-    }
-    return null;
   }
 }
 

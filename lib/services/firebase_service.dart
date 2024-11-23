@@ -136,7 +136,7 @@ Future<void> registerUserDB(
     });
   } catch (e) {
     // Handle errors during registration
-    print(e);
+    // todo handle error
   }
 }
 

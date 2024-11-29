@@ -12,6 +12,8 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
             useMaterial3: true,
             colorSchemeSeed: const Color.fromARGB(255, 33, 72, 243)),
+        darkTheme: ThemeData.dark( useMaterial3: true),
+        themeMode: ThemeMode.system,
         home: const AuthScreen());
   }
 }

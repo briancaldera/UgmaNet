@@ -90,14 +90,15 @@ class UserServiceImpl implements UserService {
     if (res.count! > 0) throw Exception('Usuario ya posee un perfil');
 
     // Chequea que el username sea unico
-    await collectionReferencePosts.where('username', isEqualTo: data['username']).count().get();
-    if (res.count! > 0) throw {'error': 'El nombre de usuario ya ha sido tomado'};
+    final coll = await collectionReferencePosts.where('username', isEqualTo: data['username']).count().get();
+    if (coll.count! > 0) throw {'error': 'El nombre de usuario ya ha sido tomado'};
 
     final docRef = await collectionReferencePosts.add({
       'userID': userID,
       'firstName': data['firstName'],
       'lastName': data['lastName'],
       'username': data['username'],
+      'pictureUrl': null,
     });
 
     final snapshot = await docRef.get();

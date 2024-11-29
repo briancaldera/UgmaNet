@@ -130,8 +130,7 @@ class _NewsFeedItemState extends State<NewsFeedItem> {
             child: Text(
               '@${_profile?.username}',
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                  color: Colors.black45, fontWeight: FontWeight.w300),
+              style: Theme.of(context).textTheme.bodyMedium!.copyWith(color: Theme.of(context).colorScheme.onSurface),
               maxLines: 1,
             ),
           ),

@@ -31,10 +31,8 @@ abstract class UserService {
 }
 
 class UserServiceImpl implements UserService {
-
-  final StreamController<UserStatus> _streamController = StreamController<UserStatus>.broadcast(
-    onListen: () {}
-  );
+  final StreamController<UserStatus> _streamController =
+      StreamController<UserStatus>.broadcast(onListen: () {});
 
   static const String profileTable = 'profiles';
 
@@ -48,10 +46,13 @@ class UserServiceImpl implements UserService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   final _auth = FirebaseAuth.instance;
+
   @override
   User? get user => _auth.currentUser;
+
   // backed field
   Profile? _profile;
+
   @override
   Profile? get profile => _profile;
 
@@ -179,6 +180,6 @@ class UserServiceImpl implements UserService {
   }
 
   UserServiceImpl() {
-    FirebaseAuth.instance.authStateChanges().listen(_observeAuthChanges);
+    _auth.userChanges().listen(_observeAuthChanges);
   }
 }

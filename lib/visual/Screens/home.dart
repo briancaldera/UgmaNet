@@ -1,4 +1,6 @@
 import 'package:UgmaNet/visual/Screens/feed.dart';
+import 'package:UgmaNet/visual/Screens/groups.dart';
+import 'package:UgmaNet/visual/Screens/notifications.dart';
 import 'package:UgmaNet/visual/Screens/profile.dart';
 import 'package:firebase_ui_auth/firebase_ui_auth.dart';
 import 'package:flutter/material.dart';
@@ -80,8 +82,8 @@ class HomeScreenState extends State<HomeScreen> {
         body: const TabBarView(
           children: [
             NewsFeedTab(),
-            Icon(Icons.group_outlined),
-            Icon(Icons.notifications_outlined),
+            GroupsTab(),
+            NotificationsTab(),
           ],
         ),
       ),

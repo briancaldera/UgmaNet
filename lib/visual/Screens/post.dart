@@ -83,7 +83,7 @@ class CreatePostFormState extends State<CreatePostForm> {
           
                             final content = values['content'] as String;
           
-                            final user = await _userService.getCurrentUser();
+                            final user = _userService.user;
           
                             if (user == null) {
                               throw Exception('Usuario no ha iniciado sesion');

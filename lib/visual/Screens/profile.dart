@@ -1,45 +1,30 @@
 import 'dart:io';
 import 'package:UgmaNet/services/user_service.dart';
-import 'package:UgmaNet/visual/Screens/Home.dart';
-import 'package:UgmaNet/visual/Screens/Loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../models/profile.dart';
 
 class CreateProfileScreen extends StatelessWidget {
-  CreateProfileScreen({super.key});
-
-  final UserService _userService = UserServiceImpl.instance;
+  const CreateProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final future = _checkProfile();
-
-    return FutureBuilder(
-        future: future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const LoaderScreen();
-          }
-
-          if (!snapshot.hasData) {
-            return const Scaffold(
-              body: CreateProfileForm(),
-            );
-          }
-
-          return const HomeScreen();
-        });
-  }
-
-  Future<Profile?> _checkProfile() async {
-    final user = await _userService.getCurrentUser();
-
-    final profile = await _userService.getProfile(user!.uid);
-    return profile;
-  }
+  Widget build(BuildContext context) => Scaffold(
+    body: Container(
+      padding: const EdgeInsets.only(left: 30, right: 30),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Image.asset('assets/images/logo/UGMA-LOGO.png', height: 150, width: 150,),
+          const Padding(
+            padding: EdgeInsets.only(top: 20, bottom: 20),
+            child: Text('Procedamos a crear tu perfil de usuario'),
+          ),
+          const CreateProfileForm()
+        ],
+      ),
+    ),
+  );
 }
 
 class CreateProfileForm extends StatefulWidget {
@@ -55,6 +40,8 @@ class CreateProfileFormState extends State<CreateProfileForm> {
   final _formKey = GlobalKey<FormBuilderState>();
   final UserService _userService = UserServiceImpl.instance;
 
+  bool _isProcessing = false;
+
   @override
   Widget build(BuildContext context) {
     return FormBuilder(
@@ -64,12 +51,13 @@ class CreateProfileFormState extends State<CreateProfileForm> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           FormBuilderTextField(
+            maxLength: 20,
             decoration: const InputDecoration(
               prefixIcon: Icon(Icons.alternate_email_rounded),
               labelText: 'Nombre de usuario',
               border: OutlineInputBorder(),
               helperText:
-                  'Máximo 20 caracteres. Se permiten . o _. Sin espacios en blanco.',
+                  'Ejemplo: @johnd123',
             ),
             name: 'username',
             onChanged: (val) {},
@@ -78,13 +66,14 @@ class CreateProfileFormState extends State<CreateProfileForm> {
                   errorText: 'El campo es requerido'),
               FormBuilderValidators.username(
                   maxLength: 20,
+                  minLength: 3,
                   allowUnderscore: true,
                   allowSpace: false,
                   allowNumbers: true,
                   allowDash: false,
-                  allowSpecialChar: false,
+                  allowSpecialChar: true,
                   allowDots: true,
-                  errorText: 'No válido')
+                  errorText: 'No debe contener espacios en blanco o símbolos otros que . y _')
             ]),
           ),
           const SizedBox(
@@ -100,7 +89,7 @@ class CreateProfileFormState extends State<CreateProfileForm> {
             validator: FormBuilderValidators.compose([
               FormBuilderValidators.required(
                   errorText: 'El campo es requerido'),
-              FormBuilderValidators.firstName(errorText: 'No válido')
+              FormBuilderValidators.firstName(errorText: 'Inválido. Debe comenzar por mayúscula, sin espacios.')
             ]),
           ),
           const SizedBox(
@@ -116,55 +105,65 @@ class CreateProfileFormState extends State<CreateProfileForm> {
             validator: FormBuilderValidators.compose([
               FormBuilderValidators.required(
                   errorText: 'El campo es requerido'),
-              FormBuilderValidators.lastName(errorText: 'No válido')
+              FormBuilderValidators.lastName(errorText: 'Inválido. Debe comenzar por mayúscula, sin espacios.')
             ]),
           ),
           const SizedBox(
             height: 10,
           ),
           ElevatedButton(
-            onPressed: () {
-              if (_formKey.currentState!.validate()) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Procesando...')),
-                );
-
-                final values = _formKey.currentState!.instantValue;
-
-                final data = {
-                  'firstName': values['firstName'] as String,
-                  'lastName': values['lastName'] as String,
-                  'username': values['username'] as String,
-                };
-
-                try {
-                  _userService.createProfile(data).then((value) {
-                    if (context.mounted) {
-                      Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute<HomeScreen>(
-                              builder: (context) => const HomeScreen()));
-                    }
-                  });
-                } on Map<String, String> catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text(e['error'] ?? 'Ocurrió un error')));
-                  }
-                }
-              }
-            },
+            onPressed: _isProcessing ? null : _submitFormHandler,
             child: const Text('Crear perfil'),
           ),
         ],
       ),
     );
   }
+
+  void _submitFormHandler() async {
+
+    final context = this.context;
+
+    if (_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Procesando...')),
+      );
+
+      final values = _formKey.currentState!.instantValue;
+
+      final data = {
+        'firstName': values['firstName'] as String,
+        'lastName': values['lastName'] as String,
+        'username': values['username'] as String,
+      };
+
+      try {
+        setState(() {
+          _isProcessing = true;
+        });
+
+        await _userService.createProfile(data);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Perfil creado')),
+          );
+        }
+
+      } on Map<String, String> catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(e['error'] ?? 'Ocurrió un error')));
+        }
+      } finally {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
+    }
+  }
 }
 
 class UpdateProfilePictureScreen extends StatelessWidget {
-
-
   @override
   Widget build(BuildContext context) {
     return const Scaffold(

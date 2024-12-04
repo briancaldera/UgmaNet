@@ -1,5 +1,5 @@
+import 'dart:async';
 import 'dart:io';
-
 import 'package:UgmaNet/models/profile.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -8,52 +8,62 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart';
 import 'package:uuid/uuid.dart';
 
+typedef UserStatus = ({User? user, Profile? profile});
+
 abstract class UserService {
+  /// Usuario actual.
   User? get user;
+
+  /// Perfil del usuario actual.
   Profile? get profile;
-  Future<User?> getUser(String id);
 
-  Future<User?> getCurrentUser();
+  /// Stream para observar cambios de autenticación.
+  Stream<UserStatus> authChanges();
 
+  /// Devuelve el perfil del usuario con el [id] indicado.
   Future<Profile?> getProfile(String id);
 
+  /// Crea un nuevo perfil
   Future<Profile?> createProfile(Map<String, String> data);
 
+  /// Actualiza la foto de perfil del usuario
   Future<void> updateProfilePicture(XFile? file);
 }
 
 class UserServiceImpl implements UserService {
-  static const String PROFILE_TABLE = 'profiles';
+  final StreamController<UserStatus> _streamController =
+      StreamController<UserStatus>.broadcast(onListen: () {});
+
+  static const String profileTable = 'profiles';
 
   static UserService? _instance;
 
   static UserService get instance {
     _instance ??= UserServiceImpl();
-
     return _instance!;
   }
 
-  final FirebaseFirestore db = FirebaseFirestore.instance;
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+
   final _auth = FirebaseAuth.instance;
+
   @override
   User? get user => _auth.currentUser;
+
   // backed field
   Profile? _profile;
+
   @override
   Profile? get profile => _profile;
 
   @override
-  Future<User?> getCurrentUser() async => _auth.currentUser;
-
-  @override
-  Future<User?> getUser(String id) {
-    // TODO: implement getUser
-    throw UnimplementedError();
+  Stream<UserStatus> authChanges() {
+    return _streamController.stream;
   }
 
   @override
   Future<Profile?> getProfile(String id) async {
-    final profileColl = db.collection(PROFILE_TABLE);
+    final profileColl = _db.collection(profileTable);
 
     final querySnapshot =
         await profileColl.where('userID', isEqualTo: id).get();
@@ -77,13 +87,13 @@ class UserServiceImpl implements UserService {
         'firstName': '',
         'lastName': '',
       }]) async {
-    final user = await getCurrentUser();
+    final user = this.user;
 
     final userID = user?.uid;
 
     if (userID == null) throw Exception("Usuario debe estar logueado");
 
-    CollectionReference collectionReferencePosts = db.collection(PROFILE_TABLE);
+    CollectionReference collectionReferencePosts = _db.collection(profileTable);
 
     // Chequea que el user no tenga ya creado un perfil
     final res = await collectionReferencePosts.where('userID', isEqualTo: userID).count().get();
@@ -91,13 +101,14 @@ class UserServiceImpl implements UserService {
 
     // Chequea que el username sea unico
     final coll = await collectionReferencePosts.where('username', isEqualTo: data['username']).count().get();
-    if (res.count! > 0) throw {'error': 'El nombre de usuario ya ha sido tomado'};
+    if (coll.count! > 0) throw {'error': 'El nombre de usuario ya ha sido tomado'};
 
     final docRef = await collectionReferencePosts.add({
       'userID': userID,
       'firstName': data['firstName'],
       'lastName': data['lastName'],
       'username': data['username'],
+      'pictureUrl': null,
     });
 
     final snapshot = await docRef.get();
@@ -105,6 +116,11 @@ class UserServiceImpl implements UserService {
     final profile = _snapshotToProfile(snapshot);
 
     _profile = profile;
+    await user?.updateDisplayName(profile.username);
+
+    final event = (user: user, profile: profile);
+
+    _streamController.add(event);
 
     return profile;
   }
@@ -119,7 +135,7 @@ class UserServiceImpl implements UserService {
         final rootFolder = FirebaseStorage.instance.ref();
         final pfpFolder = rootFolder.child('profiles').child(currentUser.uid).child('picture');
 
-        final fileID = Uuid().v4();
+        final fileID = const Uuid().v4();
         final fileExtension = extension(file.path);
         final fileName = '$fileID$fileExtension';
 
@@ -135,7 +151,7 @@ class UserServiceImpl implements UserService {
 
         await currentUser.updatePhotoURL(pfpUrl);
 
-        final querySnapshot = await db.collection(PROFILE_TABLE).where('userID', isEqualTo: currentUser.uid).get();
+        final querySnapshot = await _db.collection(profileTable).where('userID', isEqualTo: currentUser.uid).get();
         final profileRef = querySnapshot.docs.first.reference;
 
         profileRef.update({'pictureUrl': pfpUrl});
@@ -149,15 +165,21 @@ class UserServiceImpl implements UserService {
     }
   }
 
-  Future<void> _observeUserChanges(User? user) async {
+  Future<void> _observeAuthChanges(User? user) async {
+    Profile? profile;
+
     if (user == null) {
-      _profile = null;
+      profile = null;
     } else {
-      _profile = await getProfile(user.uid);
+      profile = await getProfile(user.uid);
     }
+
+    _profile = profile;
+    UserStatus event = (user: user, profile: profile);
+    _streamController.add(event);
   }
 
   UserServiceImpl() {
-    FirebaseAuth.instance.authStateChanges().listen(_observeUserChanges);
+    _auth.userChanges().listen(_observeAuthChanges);
   }
 }

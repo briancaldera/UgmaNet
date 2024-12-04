@@ -19,7 +19,7 @@ abstract class PostService {
 }
 
 class PostServiceImpl implements PostService {
-  static const String TABLE_NAME = 'posts';
+  static const String postTable = 'posts';
 
   static PostService? _instance;
 
@@ -34,7 +34,7 @@ class PostServiceImpl implements PostService {
   @override
   Future<List<Post>> getPosts({String? userID}) async {
     final CollectionReference collectionReferencePosts =
-        db.collection(TABLE_NAME);
+        db.collection(postTable);
 
     final QuerySnapshot querySnapshot = await collectionReferencePosts
         .orderBy('createdAt', descending: true)
@@ -50,7 +50,7 @@ class PostServiceImpl implements PostService {
   @override
   Future<Post> savePost(String content, String userID,
       {List<XFile>? images}) async {
-    CollectionReference collectionReferencePosts = db.collection(TABLE_NAME);
+    CollectionReference collectionReferencePosts = db.collection(postTable);
 
     // Create a new document in the "Feed" collection with a random ID
     DocumentReference documentReference = await collectionReferencePosts.add({
@@ -109,7 +109,7 @@ class PostServiceImpl implements PostService {
 
   @override
   Future<bool> likePost(String postID, String userID) async {
-    final postRef = db.collection(TABLE_NAME).doc(postID);
+    final postRef = db.collection(postTable).doc(postID);
     final postDoc = await postRef.get();
 
     final likes = List<String>.from(postDoc.get('likes'));
@@ -124,7 +124,7 @@ class PostServiceImpl implements PostService {
 
   @override
   Future<bool> unlikePost(String postID, String userID) async {
-    final postRef = db.collection(TABLE_NAME).doc(postID);
+    final postRef = db.collection(postTable).doc(postID);
     final postDoc = await postRef.get();
 
     final likes = List<String>.from(postDoc.get('likes'));
@@ -139,7 +139,7 @@ class PostServiceImpl implements PostService {
   @override
   Future<List<String>> getLikedUserIDList(String postID) async {
     final CollectionReference collectionReferencePosts =
-        db.collection(TABLE_NAME);
+        db.collection(postTable);
 
     final snapshot = await collectionReferencePosts.doc(postID).get();
 

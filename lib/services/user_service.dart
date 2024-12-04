@@ -115,6 +115,7 @@ class UserServiceImpl implements UserService {
     final profile = _snapshotToProfile(snapshot);
 
     _profile = profile;
+    await user?.updateDisplayName(profile.username);
 
     final event = (user: user, profile: profile);
 
